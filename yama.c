@@ -10,3 +10,12 @@ yama_header *yama_new() {
   memcpy(result, _magic, sizeof(_magic));
   return result;
 }
+
+void *yama_first(const yama_header *header) {
+  return NULL;
+}
+
+yama_record *yama_add(const yama_header *header,
+		      const char *payload) {
+  return NULL;
+}
