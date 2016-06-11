@@ -3,9 +3,13 @@
 #include <unistd.h>
 #include "yama.h"
 
-struct __attribute__((packed, aligned(4))) yama_payload {
+struct __attribute__((packed, aligned(4))) yama_header {
   char magic[4];
   int32_t size;
+};
+
+struct __attribute__((packed, aligned(4))) yama_payload {
+  struct yama_header header;
   char payload[0];
 };
 
@@ -25,16 +29,13 @@ static inline int round_up_to(uint32_t value, int round) {
   return (value & ~(round - 1)) + round;
 }
 
-#include <stdio.h>
 static struct yama_payload *new_payload() {
   struct yama_payload *result;
   int size = sizeof(struct yama_payload);
   result = malloc(size);
   memset(result, 0, size);
-  result->size = size;
-  fprintf(stderr, "Payload at %p, size %zu\n",
-	  result, result->size);
-  memcpy(result->magic, _magic, sizeof(_magic));
+  result->header.size = size;
+  memcpy(result->header.magic, _magic, sizeof(_magic));
   return result;
 }
 
@@ -49,7 +50,7 @@ YAMA *yama_new() {
 
 YAMA *yama_read(int fd) {
   YAMA *result = yama_new();
-  write(fd, result->payload, result->payload->size);
+  write(fd, result->payload, result->payload->header.size);
   return result;
 }
 
@@ -66,14 +67,6 @@ static inline yama_record *offt_to_record(const YAMA *yama,
   return (yama_record *) ptr;
 }
 
-static void dump_payload(struct yama_payload *payload) {
-  fprintf(stderr, "XXX: Size = %u\n", payload->size);
-  char *ptr = payload->payload;
-  yama_record *record = (yama_record *) ptr;
-  fprintf(stderr, "XXX: Item at %p\n", record);
-  fprintf(stderr, "XXX: item size = %u\n", record->size);
-}
-
 yama_record *yama_first(const YAMA *yama) {
   return offt_to_record(yama, yama->first);
 }
@@ -88,19 +81,15 @@ yama_record *yama_add(YAMA * const yama,
   yama_record *result;
   int datalen = strlen(payload);
   int aligned_len = round_up_to(sizeof(yama_record) + datalen, 8);
-  fprintf(stderr, "Data is [%s], increasing by %d (%d)\n",
-	  payload, datalen, aligned_len);
-  int newsize = yama->payload->size + aligned_len;
+  int newsize = yama->payload->header.size + aligned_len;
   yama->payload = realloc(yama->payload, newsize);
-  fprintf(stderr, "Payload at %p, size %zu\n",
-	  yama->payload, newsize);
-  char *_result = (char *) yama->payload + yama->payload->size;
+  uint32_t old_end = yama->payload->header.size;
+  char *_result = (char *) yama->payload + old_end;
   result = (yama_record *) _result;
   result->size = datalen;
   memcpy(result->payload, payload, datalen);
   result->next = yama->first;
-  yama->first = yama->payload->size;
-  yama->payload->size = newsize;
-  dump_payload(yama->payload);
+  yama->first = old_end;
+  yama->payload->header.size = newsize;
   return result;
 }
