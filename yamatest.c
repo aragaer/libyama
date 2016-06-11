@@ -1,5 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "minunit.h"
 #include "yama.h"
 
@@ -56,14 +59,33 @@ static char *test_simple_usage() {
   return NULL;
 }
 
+static char *test_file_usage() {
+  char template[] = "yamaXXXXXX";
+  int fd = mkstemp(template);
+  YAMA *yama = yama_read(fd);
+  mu_assert("Open empty file", yama != NULL);
+  off_t end = lseek(fd, 0, SEEK_END);
+  mu_assert("File should no longer be empty",
+	    end >= sizeof(YAMA));
+  char magic[4];
+  lseek(fd, 0, SEEK_SET);
+  read(fd, magic, 4);
+  mu_assert("File should start with magic",
+	    memcmp(magic, "YAMA", 4) == 0);
+  unlink(template);
+  close(fd);
+  return NULL;
+}
+
 static char *run_all_tests() {
   mu_run_test(test_yama_object);
   mu_run_test(test_add_item);
   mu_run_test(test_simple_usage);
+  mu_run_test(test_file_usage);
   return NULL;
 }
 
-main() {
+int main() {
   char *result = run_all_tests();
   if (result == NULL)
     printf("All %d tests passed\n", tests_run);

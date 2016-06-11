@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "yama.h"
 
 static char _magic[4] = {'Y', 'A', 'M', 'A'};
@@ -8,6 +9,12 @@ YAMA *yama_new() {
   YAMA *result = malloc(sizeof(YAMA));
   memset(result, 0, sizeof(*result));
   return memcpy(result, _magic, sizeof(_magic));
+}
+
+YAMA *yama_read(int fd) {
+  YAMA *result = yama_new();
+  write(fd, result, sizeof(*result));
+  return result;
 }
 
 void yama_release(YAMA *header) {

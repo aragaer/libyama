@@ -12,6 +12,7 @@ typedef struct {
 } YAMA;
 
 YAMA *yama_new();
+YAMA *yama_read(int fd);
 void yama_release(YAMA *);
 yama_record *yama_first(YAMA const * const);
 yama_record *yama_next(YAMA const * const, yama_record *);
