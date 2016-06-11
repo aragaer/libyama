@@ -1,9 +1,12 @@
 #ifndef _YAMA_H_
 
-typedef struct {
+struct yama_record_s {
   int size;
+  struct yama_record_s *next;
   char payload[0];
-} yama_record;
+};
+
+typedef struct yama_record_s yama_record;
 
 typedef struct {
   char magic[4];

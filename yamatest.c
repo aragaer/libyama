@@ -24,16 +24,29 @@ static char *test_add_item() {
   mu_assert("Payload contents are correct",
 	    memcmp(item->payload, "Hello, world",
 		   item->size) == 0);
+  mu_assert("This is also a last one",
+	    item->next == NULL);
   mu_assert("Added is first",
 	    yama_first(header) == item);
+  yama_record *item2 = yama_add(header, "Item 2");
+  mu_assert("Other record created",
+	    item2 != NULL);
+  mu_assert("It points to previous",
+	    item2->next == item);
   return NULL;
 }
 
 static char *test_simple_usage() {
   yama_header *header = yama_new();
   yama_add(header, "Hello, world");
+  yama_add(header, "Another record");
 
-  yama_record *item = yama_first(header);
+  yama_record *item;
+  item = yama_first(header);
+  mu_assert("Another record",
+	    strncmp(item->payload, "Another record",
+		    item->size) == 0);
+  item = item->next;
   mu_assert("Hello, world",
 	    strncmp(item->payload, "Hello, world",
 		    item->size) == 0);
