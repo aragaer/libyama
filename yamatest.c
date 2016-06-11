@@ -11,6 +11,7 @@ static char *test_yama_header() {
 	    memcmp(header->magic, "YAMA", 4) == 0);
   mu_assert("Is empty initially",
 	    yama_first(header) == NULL);
+  yama_release(header);
   return NULL;
 }
 
@@ -33,6 +34,7 @@ static char *test_add_item() {
 	    item2 != NULL);
   mu_assert("It points to previous",
 	    item2->next == item);
+  yama_release(header);
   return NULL;
 }
 
@@ -50,6 +52,7 @@ static char *test_simple_usage() {
   mu_assert("Hello, world",
 	    strncmp(item->payload, "Hello, world",
 		    item->size) == 0);
+  yama_release(header);
   return NULL;
 }
 

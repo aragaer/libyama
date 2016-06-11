@@ -14,7 +14,8 @@ typedef struct {
 } yama_header;
 
 yama_header *yama_new();
-void *yama_first(yama_header const * const);
+void yama_release(yama_header *);
+yama_record *yama_first(yama_header const * const);
 yama_record *yama_add(yama_header * const,
 		      char const * const);
 
