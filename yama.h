@@ -1,22 +1,20 @@
 #ifndef _YAMA_H_
 
-struct yama_record_s {
+typedef struct {
   int size;
-  struct yama_record_s *next;
+  void *next;
   char payload[0];
-};
-
-typedef struct yama_record_s yama_record;
+} yama_record;
 
 typedef struct {
   char magic[4];
   yama_record *first;
-} yama_header;
+} YAMA;
 
-yama_header *yama_new();
-void yama_release(yama_header *);
-yama_record *yama_first(yama_header const * const);
-yama_record *yama_add(yama_header * const,
-		      char const * const);
+YAMA *yama_new();
+void yama_release(YAMA *);
+yama_record *yama_first(YAMA const * const);
+yama_record *yama_next(YAMA const * const, yama_record *);
+yama_record *yama_add(YAMA * const, char const * const);
 
 #endif  // _YAMA_H_

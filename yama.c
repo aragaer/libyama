@@ -4,13 +4,13 @@
 
 static char _magic[4] = {'Y', 'A', 'M', 'A'};
 
-yama_header *yama_new() {
-  yama_header *result = malloc(sizeof(yama_header));
+YAMA *yama_new() {
+  YAMA *result = malloc(sizeof(YAMA));
   memset(result, 0, sizeof(*result));
   return memcpy(result, _magic, sizeof(_magic));
 }
 
-void yama_release(yama_header *header) {
+void yama_release(YAMA *header) {
   yama_record *item, *next;
   item = header->first;
   while (item != NULL) {
@@ -21,11 +21,16 @@ void yama_release(yama_header *header) {
   free(header);
 }
 
-yama_record *yama_first(const yama_header *header) {
+yama_record *yama_first(const YAMA *header) {
   return header->first;
 }
 
-yama_record *yama_add(yama_header * const header,
+yama_record *yama_next(const YAMA *header,
+		       yama_record *item) {
+  return item->next;
+}
+
+yama_record *yama_add(YAMA * const header,
 		      const char *payload) {
   yama_record *result;
   int datalen = strlen(payload);
