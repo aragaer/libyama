@@ -1,5 +1,6 @@
 /* file: minunit.h */
 #define mu_assert(message, test) do {		\
+    printf("checking " #test "\n");		\
     if (!(test))				\
       return message;				\
   } while (0)

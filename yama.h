@@ -1,14 +1,22 @@
 #ifndef _YAMA_H_
 
+#include <stdint.h>
+
 typedef struct {
-  int size;
-  void *next;
+  int32_t size;
+  int32_t next;
   char payload[0];
 } yama_record;
 
 typedef struct {
+  int32_t size;
+  char payload[0];
+} yama_payload;
+
+typedef struct {
   char magic[4];
-  yama_record *first;
+  uint32_t first;
+  yama_payload *payload;
 } YAMA;
 
 YAMA *yama_new();

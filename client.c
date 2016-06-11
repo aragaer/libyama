@@ -2,8 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "yama.h"
 
 static void read_yama(int fd) {
   char buf[80];
@@ -28,10 +30,22 @@ int main(int argc, char *argv[]) {
     exit(-1);
   }
 
+  off_t end = lseek(fd, 0, SEEK_END);
+  lseek(fd, 0, SEEK_SET);
+  YAMA *yama, _header;
+  if (end == 0) {
+    yama = yama_new();
+    write(fd, yama, sizeof(YAMA));
+  } else {
+    yama = &_header;
+    read(fd, yama, sizeof(YAMA));
+  }
+
   read_yama(fd);
 
-  if (strcmp(argv[1], "write") == 0)
+  if (strcmp(argv[1], "write") == 0) {
     write_yama(fd, argv[3]);
+  }
   close(fd);
   return 0;
 }
