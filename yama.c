@@ -12,10 +12,16 @@ yama_header *yama_new() {
 }
 
 void *yama_first(const yama_header *header) {
-  return NULL;
+  return header->first;
 }
 
-yama_record *yama_add(const yama_header *header,
+yama_record *yama_add(yama_header * const header,
 		      const char *payload) {
-  return NULL;
+  yama_record *result;
+  int datalen = strlen(payload);
+  result = malloc(sizeof(yama_record) + datalen);
+  result->size = datalen;
+  memcpy(result->payload, payload, datalen);
+  header->first = result;
+  return result;
 }
