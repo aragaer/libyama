@@ -9,14 +9,8 @@ typedef struct {
 } yama_record;
 
 typedef struct {
-  int32_t size;
-  char payload[0];
-} yama_payload;
-
-typedef struct {
-  char magic[4];
   uint32_t first;
-  yama_payload *payload;
+  struct yama_payload *payload;
 } YAMA;
 
 YAMA *yama_new();

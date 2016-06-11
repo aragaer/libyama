@@ -10,8 +10,6 @@ int tests_run;
 
 static char *test_yama_object() {
   YAMA *yama = yama_new();
-  mu_assert("Yama yama magic",
-	    memcmp(yama->magic, "YAMA", 4) == 0);
   mu_assert("Is empty initially",
 	    yama_first(yama) == NULL);
   yama_release(yama);

@@ -6,6 +6,7 @@
   } while (0)
 
 #define mu_run_test(test) do {			\
+    printf("running " #test "\n");		\
     char *message = test();			\
     tests_run++;				\
     if (message)				\

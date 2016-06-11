@@ -32,13 +32,11 @@ int main(int argc, char *argv[]) {
 
   off_t end = lseek(fd, 0, SEEK_END);
   lseek(fd, 0, SEEK_SET);
-  YAMA *yama, _header;
+  char magic[] = {'Y', 'A', 'M', 'A'};
   if (end == 0) {
-    yama = yama_new();
-    write(fd, yama, sizeof(YAMA));
+    write(fd, magic, sizeof(magic));
   } else {
-    yama = &_header;
-    read(fd, yama, sizeof(YAMA));
+    read(fd, magic, sizeof(magic));
   }
 
   read_yama(fd);
