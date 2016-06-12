@@ -1,5 +1,5 @@
 CFLAGS += -Werror -Wall
-all: libyama.so
+all: libyama.so yamaclient
 
 test: yamatest
 	./yamatest

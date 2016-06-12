@@ -14,7 +14,6 @@ static void read_yama(YAMA *yama) {
 }
 
 int main(int argc, char *argv[]) {
-  fprintf(stderr, "Opening %s\n", argv[2]);
   int fd = open(argv[2], O_RDWR | O_CREAT, S_IWUSR | S_IRUSR);
   if (fd == -1) {
     perror("open");

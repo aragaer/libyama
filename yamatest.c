@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include "minunit.h"
 #include "yama.h"
@@ -98,6 +99,10 @@ static char *test_file_read_write() {
   mu_assert("Initial item",
 	    strncmp(item->payload, "Initial item",
 		    item->size) == 0);
+  struct stat buf;
+  fstat(fd, &buf);
+  mu_assert("File size is correct",
+	    buf.st_size > strlen("Initial item")+strlen("Hello, world"));
   yama_release(yama);
   close(fd);
   unlink(template);

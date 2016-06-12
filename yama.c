@@ -110,9 +110,11 @@ yama_record *yama_next(const YAMA *yama, yama_record *item) {
 static void yama_resize(YAMA * const yama, int newsize) {
   if (yama->fd == -1)
     yama->payload = realloc(yama->payload, newsize);
-  else
+  else {
     yama->payload = mremap(yama->payload, yama->payload->header.size,
 			   newsize, MREMAP_MAYMOVE);
+    ftruncate(yama->fd, newsize);
+  }
   yama->payload->header.size = newsize;
 }
 
