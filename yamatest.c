@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -57,7 +58,7 @@ static char *test_simple_usage() {
   return NULL;
 }
 
-static char *test_file_usage() {
+static char *test_file_create() {
   char template[] = "yamaXXXXXX";
   int fd = mkstemp(template);
   YAMA *yama = yama_read(fd);
@@ -71,7 +72,29 @@ static char *test_file_usage() {
   mu_assert("File should start with magic",
 	    memcmp(magic, "YAMA", 4) == 0);
   unlink(template);
+  yama_release(yama);
   close(fd);
+  return NULL;
+}
+
+static char *test_file_read_write() {
+  char template[] = "yamaXXXXXX";
+  int fd = mkstemp(template);
+  YAMA *yama = yama_read(fd);
+  yama_add(yama, "Hello, world");
+  yama_release(yama);
+  close(fd);
+
+  fd = open(template, O_RDWR);
+  YAMA *yama2 = yama_read(fd);
+  yama_record *item = yama_first(yama2);
+  mu_assert("Not empty", item != NULL);
+  mu_assert("Hello, world",
+	    strncmp(item->payload, "Hello, world",
+		    item->size) == 0);
+  yama_release(yama);
+  close(fd);
+  unlink(template);
   return NULL;
 }
 
@@ -79,7 +102,8 @@ static char *run_all_tests() {
   mu_run_test(test_yama_object);
   mu_run_test(test_add_item);
   mu_run_test(test_simple_usage);
-  mu_run_test(test_file_usage);
+  mu_run_test(test_file_create);
+  mu_run_test(test_file_read_write);
   return NULL;
 }
 

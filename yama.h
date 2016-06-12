@@ -9,6 +9,7 @@ typedef struct {
 } yama_record;
 
 typedef struct {
+  int fd;
   struct yama_payload *payload;
 } YAMA;
 
