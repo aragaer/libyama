@@ -10,6 +10,8 @@ yamatest: yamatest.o yama.o yama.h
 clienttest: yamaclient
 	./test.sh
 
+yama.o: CFLAGS+=-fPIC
+
 yamaclient: client.o libyama.so
 	$(CC) -o $@ $< -L. -lyama
 
