@@ -15,4 +15,13 @@ test `dd if=$test_file bs=4 count=1 2>/dev/null` == "YAMA"
 
 result=`./yamaclient read $test_file`
 test "$result" = "Hello, world"
+
+result=`./yamaclient write $test_file "Second item"`
+test -z "$result"
+
+diff -u <(./yamaclient read $test_file) - <<EOF
+Second item
+Hello, world
+EOF
+
 rm $test_file

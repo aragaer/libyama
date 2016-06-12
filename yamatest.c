@@ -81,6 +81,7 @@ static char *test_file_read_write() {
   char template[] = "yamaXXXXXX";
   int fd = mkstemp(template);
   YAMA *yama = yama_read(fd);
+  yama_add(yama, "Initial item");
   yama_add(yama, "Hello, world");
   yama_release(yama);
   close(fd);
@@ -91,6 +92,11 @@ static char *test_file_read_write() {
   mu_assert("Not empty", item != NULL);
   mu_assert("Hello, world",
 	    strncmp(item->payload, "Hello, world",
+		    item->size) == 0);
+  item = yama_next(yama2, item);
+  mu_assert("Not empty", item != NULL);
+  mu_assert("Initial item",
+	    strncmp(item->payload, "Initial item",
 		    item->size) == 0);
   yama_release(yama);
   close(fd);

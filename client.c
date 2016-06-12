@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
 #include <unistd.h>
 #include "yama.h"
 
@@ -11,7 +9,7 @@ static void read_yama(YAMA *yama) {
   yama_record *item;
   for (item = yama_first(yama); item; item = yama_next(yama, item)) {
     write(1, item->payload, item->size);
-    printf("\n");
+    write(1, "\n", 1);
   }
 }
 
@@ -25,10 +23,11 @@ int main(int argc, char *argv[]) {
 
   YAMA *yama = yama_read(fd);
 
-  read_yama(yama);
-
-  if (strcmp(argv[1], "write") == 0)
+  if (strcmp(argv[1], "read") == 0)
+    read_yama(yama);
+  else if (strcmp(argv[1], "write") == 0)
     yama_add(yama, argv[3]);
+
   yama_release(yama);
   close(fd);
   return 0;
