@@ -7,43 +7,29 @@
 #include <unistd.h>
 #include "yama.h"
 
-static void read_yama(int fd) {
-  char buf[80];
-  int bytes_read;
-  do {
-    bytes_read = read(fd, buf, sizeof(buf) - 1);
-    buf[bytes_read] = '\0';
-    printf("%s", buf);
-  } while (bytes_read == sizeof(buf) - 1);
-}
-
-static void write_yama(int fd, char *record) {
-  write(fd, record, strlen(record));
+static void read_yama(YAMA *yama) {
+  yama_record *item;
+  for (item = yama_first(yama); item; item = yama_next(yama, item)) {
+    write(1, item->payload, item->size);
+    printf("\n");
+  }
 }
 
 int main(int argc, char *argv[]) {
   fprintf(stderr, "Opening %s\n", argv[2]);
-  int fd = open(argv[2], O_RDWR | O_CREAT,
-		S_IWUSR | S_IRUSR);
+  int fd = open(argv[2], O_RDWR | O_CREAT, S_IWUSR | S_IRUSR);
   if (fd == -1) {
     perror("open");
     exit(-1);
   }
 
-  off_t end = lseek(fd, 0, SEEK_END);
-  lseek(fd, 0, SEEK_SET);
-  char magic[] = {'Y', 'A', 'M', 'A'};
-  if (end == 0) {
-    write(fd, magic, sizeof(magic));
-  } else {
-    read(fd, magic, sizeof(magic));
-  }
+  YAMA *yama = yama_read(fd);
 
-  read_yama(fd);
+  read_yama(yama);
 
-  if (strcmp(argv[1], "write") == 0) {
-    write_yama(fd, argv[3]);
-  }
+  if (strcmp(argv[1], "write") == 0)
+    yama_add(yama, argv[3]);
+  yama_release(yama);
   close(fd);
   return 0;
 }
