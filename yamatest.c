@@ -64,9 +64,6 @@ static char *test_file_create() {
   int fd = mkstemp(template);
   YAMA *yama = yama_read(fd);
   mu_assert("Open empty file", yama != NULL);
-  off_t end = lseek(fd, 0, SEEK_END);
-  mu_assert("File should no longer be empty",
-	    end >= sizeof(YAMA));
   char magic[4];
   lseek(fd, 0, SEEK_SET);
   read(fd, magic, 4);
