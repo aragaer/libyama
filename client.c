@@ -7,10 +7,8 @@
 
 static void read_yama(YAMA *yama) {
   yama_record *item;
-  for (item = yama_first(yama); item; item = yama_next(yama, item)) {
-    write(1, item->payload, item->size);
-    write(1, "\n", 1);
-  }
+  for (item = yama_first(yama); item; item = yama_next(yama, item))
+    printf("%*s\n", item->size, item->payload);
 }
 
 int main(int argc, char *argv[]) {
