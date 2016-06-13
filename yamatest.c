@@ -109,12 +109,32 @@ static char *test_file_read_write() {
   return NULL;
 }
 
+static char *test_insert() {
+  YAMA *yama = yama_new();
+  yama_record *item = yama_add(yama, "Hello, world");
+  yama_insert_after(yama, item, "Another record");
+
+  item = yama_first(yama);
+  mu_assert("Hello, world",
+	    strncmp(item->payload, "Hello, world",
+		    item->size) == 0);
+  item = yama_next(yama, item);
+  mu_assert("Inserted",
+	    item != NULL);
+  mu_assert("Another record",
+	    strncmp(item->payload, "Another record",
+		    item->size) == 0);
+  yama_release(yama);
+  return NULL;
+}
+
 static char *run_all_tests() {
   mu_run_test(test_yama_object);
   mu_run_test(test_add_item);
   mu_run_test(test_simple_usage);
   mu_run_test(test_file_create);
   mu_run_test(test_file_read_write);
+  mu_run_test(test_insert);
   return NULL;
 }
 

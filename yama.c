@@ -118,18 +118,35 @@ static void yama_resize(YAMA * const yama, int newsize) {
   yama->payload->header.size = newsize;
 }
 
-yama_record *yama_add(YAMA * const yama,
-		      const char *payload) {
+static yama_record *yama_store(YAMA * const yama,
+			       char const *payload) {
   int datalen = strlen(payload);
   int aligned_len = round_up_to(sizeof(yama_record) + datalen, 4);
   uint32_t oldsize = yama->payload->header.size;
   int newsize = oldsize + aligned_len;
-
   yama_resize(yama, newsize);
   yama_record *result = offt_to_record(yama, oldsize);
   result->size = datalen;
-  result->next = yama->payload->header.first;
+  result->next = -1;
   memcpy(result->payload, payload, datalen);
+  return result;
+}
+
+yama_record *yama_add(YAMA * const yama,
+		      const char *payload) {
+  uint32_t oldsize = yama->payload->header.size;
+  yama_record *result = yama_store(yama, payload);
+  result->next = yama->payload->header.first;
   yama->payload->header.first = oldsize;
+  return result;
+}
+
+yama_record *yama_insert_after(YAMA * const yama,
+			       yama_record *item,
+			       char const *payload) {
+  uint32_t oldsize = yama->payload->header.size;
+  yama_record *result = yama_store(yama, payload);
+  result->next = item->next;
+  item->next = oldsize;
   return result;
 }
