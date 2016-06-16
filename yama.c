@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include "yama.h"
 
+#define NO_RECORD ((int32_t) -1)
 // #define DEBUG
 
 #ifdef DEBUG
@@ -42,7 +43,7 @@ static void init_payload(struct yama_payload *payload) {
   int size = sizeof(struct yama_payload);
   memset(payload, 0, size);
   payload->header.size = size;
-  payload->header.first = -1;
+  payload->header.first = NO_RECORD;
   memcpy(payload->header.magic, _magic, sizeof(_magic));
 }
 
@@ -92,11 +93,19 @@ void yama_release(YAMA *yama) {
 }
 
 static inline yama_record *offt_to_record(const YAMA *yama,
-					  uint32_t offt) {
-  if (offt == -1)
+					  int32_t offt) {
+  if (offt == NO_RECORD)
     return NULL;
   char *ptr = (char *) yama->payload + offt;
   return (yama_record *) ptr;
+}
+
+static inline int32_t record_to_offt(const YAMA *yama,
+				      const yama_record *item) {
+  if (item == NULL)
+    return -1;
+  size_t diff = (char *) item - (char *) yama->payload;
+  return (int32_t) diff;
 }
 
 yama_record *yama_first(const YAMA *yama) {
@@ -127,26 +136,45 @@ static yama_record *yama_store(YAMA * const yama,
   yama_resize(yama, newsize);
   yama_record *result = offt_to_record(yama, oldsize);
   result->size = datalen;
-  result->next = -1;
+  result->next = NO_RECORD;
+  result->previous = NO_RECORD;
   memcpy(result->payload, payload, datalen);
   return result;
 }
 
 yama_record *yama_add(YAMA * const yama,
 		      const char *payload) {
-  uint32_t oldsize = yama->payload->header.size;
+  uint32_t result_offt = yama->payload->header.size;
   yama_record *result = yama_store(yama, payload);
+  if (yama->payload->header.first != NO_RECORD)
+    yama_first(yama)->previous = result_offt;
   result->next = yama->payload->header.first;
-  yama->payload->header.first = oldsize;
+  result->previous = NO_RECORD;
+  yama->payload->header.first = result_offt;
   return result;
 }
 
 yama_record *yama_insert_after(YAMA * const yama,
 			       yama_record *item,
 			       char const *payload) {
-  uint32_t oldsize = yama->payload->header.size;
+  uint32_t result_offt = yama->payload->header.size;
+  yama_record *result = yama_store(yama, payload);
+  result->previous = record_to_offt(yama, item);
+  result->next = item->next;
+  item->next = result_offt;
+  return result;
+}
+
+yama_record *yama_edit(YAMA * const yama,
+		       yama_record *item,
+		       char const *payload) {
+  uint32_t result_offt = yama->payload->header.size;
   yama_record *result = yama_store(yama, payload);
   result->next = item->next;
-  item->next = oldsize;
+  result->previous = item->previous;
+  if (item->previous == NO_RECORD)
+    yama->payload->header.first = result_offt;
+  else
+    offt_to_record(yama, item->previous)->next = result_offt;
   return result;
 }

@@ -5,6 +5,7 @@
 typedef struct {
   int32_t size;
   int32_t next;
+  int32_t previous;
   char payload[0];
 } yama_record;
 
@@ -22,5 +23,7 @@ yama_record *yama_add(YAMA * const, char const * const);
 yama_record *yama_insert_after(YAMA * const,
 			       yama_record *,
 			       char const * const);
+yama_record *yama_edit(YAMA * const, yama_record *,
+		       char const * const);
 
 #endif  // _YAMA_H_

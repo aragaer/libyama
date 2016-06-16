@@ -125,6 +125,23 @@ static char *test_insert() {
   return NULL;
 }
 
+static char *test_edit() {
+  YAMA *yama = yama_new();
+  yama_record *item = yama_add(yama, "Hello, world");
+  yama_record *item2 = yama_edit(yama, item, "Howdy, world");
+  mu_assert("Stored new text", item2 != NULL);
+  mu_assert("It is not old one", item2 != item);
+
+  item = yama_first(yama);
+  mu_assert("Howdy, world",
+	    strncmp(item->payload, "Howdy, world",
+		    item->size) == 0);
+  mu_assert("Last one",
+	    yama_next(yama, item) == NULL);
+  yama_release(yama);
+  return NULL;
+}
+
 static char *run_all_tests() {
   mu_run_test(test_yama_object);
   mu_run_test(test_add_item);
@@ -132,6 +149,7 @@ static char *run_all_tests() {
   mu_run_test(test_file_create);
   mu_run_test(test_file_read_write);
   mu_run_test(test_insert);
+  mu_run_test(test_edit);
   return NULL;
 }
 

@@ -5,11 +5,12 @@ test: yamatest
 	./yamatest
 	$(MAKE) clienttest
 
-yamatest: yamatest.o yama.o yama.h
+yamatest: yamatest.o yama.o
 
 clienttest: yamaclient
 	./test.sh
 
+yama.o: yama.c yama.h
 yama.o: CFLAGS+=-fPIC
 
 yamaclient: client.o libyama.so
