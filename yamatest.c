@@ -9,6 +9,7 @@
 #include "yama.h"
 
 int tests_run;
+int verbose;
 
 static char *test_yama_object() {
   YAMA *yama = yama_new();
@@ -171,6 +172,11 @@ static void striped_fill(YAMA *yama, yama_record *items[], int count) {
     items[i] = yama_insert_after(yama, items[i+1], "x");
 }
 
+static void fill_update(YAMA *yama, yama_record *items[], int count) {
+  sequential_fill(yama, items, count);
+  items[1] = yama_edit(yama, items[1], "y");
+}
+
 #define RECORDS 4
 static char *test_traverse(void (*fill_func)(YAMA *, yama_record *[], int)) {
   YAMA *yama = yama_new();
@@ -192,10 +198,13 @@ static char *run_all_tests() {
   mu_run_test(test_edit);
   mu_run_test(test_traverse, sequential_fill);
   mu_run_test(test_traverse, striped_fill);
+  mu_run_test(test_traverse, fill_update);
   return NULL;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+  if (argc > 1 && strncmp(argv[1], "-v", 2) == 0)
+    sscanf(argv[1]+2, "%d", &verbose);
   char *result = run_all_tests();
   if (result == NULL)
     printf("All %d tests passed\n", tests_run);

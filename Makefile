@@ -2,7 +2,7 @@ CFLAGS += -Werror -Wall
 all: libyama.so yamaclient
 
 test: yamatest
-	./yamatest
+	./yamatest -v$(TEST_VERBOSE)
 	$(MAKE) clienttest
 
 yamatest: yamatest.o yama.o

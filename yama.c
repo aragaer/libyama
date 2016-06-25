@@ -179,10 +179,13 @@ yama_record *yama_edit(YAMA * const yama,
   yama_record *result = yama_store(yama, payload);
   result->next = item->next;
   result->previous = item->previous;
-  if (item->previous == NO_RECORD)
+  yama_record *prev = yama_prev(yama, item);
+  if (prev == NULL)
     yama->payload->header.first = result_offt;
   else
-    offt_to_record(yama, item->previous)->next = result_offt;
-  // FIXME: Update item->next as well - need test for that first
+    prev->next = result_offt;
+  yama_record *next = yama_next(yama, item);
+  if (next)
+    next->previous = result_offt;
   return result;
 }
