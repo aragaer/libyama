@@ -116,6 +116,10 @@ yama_record *yama_next(const YAMA *yama, yama_record *item) {
   return offt_to_record(yama, item->next);
 }
 
+yama_record *yama_prev(const YAMA *yama, yama_record *item) {
+  return offt_to_record(yama, item->previous);
+}
+
 static void yama_resize(YAMA * const yama, int newsize) {
   if (yama->fd == -1)
     yama->payload = realloc(yama->payload, newsize);
@@ -161,6 +165,9 @@ yama_record *yama_insert_after(YAMA * const yama,
   yama_record *result = yama_store(yama, payload);
   result->previous = record_to_offt(yama, item);
   result->next = item->next;
+  yama_record *next = yama_next(yama, item);
+  if (next)
+    next->previous = result_offt;
   item->next = result_offt;
   return result;
 }
@@ -176,5 +183,6 @@ yama_record *yama_edit(YAMA * const yama,
     yama->payload->header.first = result_offt;
   else
     offt_to_record(yama, item->previous)->next = result_offt;
+  // FIXME: Update item->next as well - need test for that first
   return result;
 }

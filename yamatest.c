@@ -142,6 +142,46 @@ static char *test_edit() {
   return NULL;
 }
 
+static char *verify_integrity(YAMA *yama, yama_record *items[], int count) {
+  mu_assert("Last one is in front",
+	    yama_first(yama) == items[count-1]);
+  int i;
+  for (i = 0; i < count; i++) {
+    yama_record *expected_next = i == 0 ? NULL : items[i-1];
+    yama_record *expected_prev = i == count-1 ? NULL : items[i+1];
+    mu_assert("Check next",
+	      yama_next(yama, items[i]) == expected_next);
+    mu_assert("Check previous",
+	      yama_prev(yama, items[i]) == expected_prev);
+  }
+  return NULL;
+}
+
+static void sequential_fill(YAMA *yama, yama_record *items[], int count) {
+  int i;
+  for (i = 0; i < count; i++)
+    items[i] = yama_add(yama, "x");
+}
+
+static void striped_fill(YAMA *yama, yama_record *items[], int count) {
+  int i;
+  for (i = 1; i < count; i+=2)
+    items[i] = yama_add(yama, "x");
+  for (i = 0; i < count; i+=2)
+    items[i] = yama_insert_after(yama, items[i+1], "x");
+}
+
+#define RECORDS 4
+static char *test_traverse(void (*fill_func)(YAMA *, yama_record *[], int)) {
+  YAMA *yama = yama_new();
+  yama_record *items[RECORDS];
+  fill_func(yama, items, RECORDS);
+
+  char *verification_result = verify_integrity(yama, items, RECORDS);
+  yama_release(yama);
+  return verification_result;
+}
+
 static char *run_all_tests() {
   mu_run_test(test_yama_object);
   mu_run_test(test_add_item);
@@ -150,6 +190,8 @@ static char *run_all_tests() {
   mu_run_test(test_file_read_write);
   mu_run_test(test_insert);
   mu_run_test(test_edit);
+  mu_run_test(test_traverse, sequential_fill);
+  mu_run_test(test_traverse, striped_fill);
   return NULL;
 }
 
