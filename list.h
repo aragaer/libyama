@@ -17,3 +17,7 @@ int32_t get_next(list_item const * const);
 void set_next(list_item * const, const int32_t);
 int32_t get_prev(list_item const * const);
 void set_prev(list_item * const, const int32_t);
+
+#define container_of(ptr, type, member) ({                      \
+      const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
+      (type *)( (char *)__mptr - offsetof(type,member) );})
