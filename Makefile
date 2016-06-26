@@ -6,19 +6,20 @@ test: yamatest yamaclient
 	./test.sh
 	@echo PASSED
 
-yamatest: yamatest.o yama.o
+yamatest: yamatest.o yama.o list.o
 
 clienttest: yamaclient
 	./test.sh
 
 yamatest.o: yamatest.c yama.h
+list.o: list.c list.h
 yama.o: yama.c yama.h
-yama.o: CFLAGS+=-fPIC
+yama.o list.o: CFLAGS+=-fPIC
 
 yamaclient: client.o libyama.so
 	$(CC) -o $@ $< -L. -lyama
 
-libyama.so: yama.o yama.h
+libyama.so: yama.o list.o yama.h
 	$(CC) -shared -o $@ $^
 	strip $@
 

@@ -6,6 +6,7 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "list.h"
 #include "yama.h"
 
 // #define DEBUG
@@ -19,14 +20,9 @@
 #define DPRINTF(...)
 #endif
 
-typedef struct __attribute__((packed, aligned(4))) {
-  int32_t next;
-  int32_t previous;
-} linked_list;
-
 struct __attribute__((packed, aligned(4))) yama_record_s {
   int32_t size;
-  linked_list list;
+  list_item list;
   char payload[0];
 };
 
@@ -61,7 +57,6 @@ static inline int32_t record_to_offt(const YAMA *yama,
   return (int32_t) diff;
 }
 
-
 static struct yama_payload *alloc_payload() {
   return malloc(sizeof(struct yama_payload));
 }
@@ -70,9 +65,10 @@ static void init_payload(struct yama_payload *payload) {
   int size = sizeof(struct yama_payload);
   memset(payload, 0, size);
   payload->header.size = size;
-  payload->header.sentinel.list.next =
-    payload->header.sentinel.list.previous = offsetof(struct yama_payload,
-						      header.sentinel);
+  set_next(&payload->header.sentinel.list,
+	   (int32_t) &payload->header.sentinel);
+  payload->header.sentinel.list.previous = offsetof(struct yama_payload,
+						    header.sentinel);
   payload->header.sentinel.size = sizeof(yama_record);
   memcpy(payload->header.magic, _magic, sizeof(_magic));
 }
@@ -123,12 +119,21 @@ void yama_release(YAMA *yama) {
   free(yama);
 }
 
+#define container_of(ptr, type, member) ({                      \
+      const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
+      (type *)( (char *)__mptr - offsetof(type,member) );})
+
+static inline list_item *list_next(list_item *item) {
+  yama_record *next = (yama_record *) get_next(item);
+  return &next->list;
+}
+
 static inline yama_record *sentinel(const YAMA *yama) {
   return &yama->payload->header.sentinel;
 }
 
-static inline yama_record *_next(const YAMA *yama, yama_record *item) {
-  return offt_to_record(yama, item->list.next);
+static inline yama_record *_next(yama_record *item) {
+  return container_of(list_next(&item->list), yama_record, list);
 }
 
 static inline yama_record *_prev(const YAMA *yama, yama_record *item) {
@@ -136,17 +141,17 @@ static inline yama_record *_prev(const YAMA *yama, yama_record *item) {
 }
 
 static inline void _remove(const YAMA *yama, yama_record *item) {
-  _next(yama, item)->list.previous = item->list.previous;
-  _prev(yama, item)->list.next = item->list.next;
+  _next(item)->list.previous = item->list.previous;
+  set_next(&_prev(yama, item)->list, get_next(&item->list));
 }
 
 static inline void _insert_after(const YAMA *yama,
 				 yama_record *item,
 				 yama_record *new) {
-  new->list.next = item->list.next;
+  set_next(&new->list, get_next(&item->list));
   new->list.previous = record_to_offt(yama, item);
-  _next(yama, item)->list.previous = record_to_offt(yama, new);
-  item->list.next = record_to_offt(yama, new);
+  _next(item)->list.previous = record_to_offt(yama, new);
+  set_next(&item->list, (int32_t) new);
 }
 
 static inline yama_record *sentinel_to_null(const YAMA *yama,
@@ -155,12 +160,12 @@ static inline yama_record *sentinel_to_null(const YAMA *yama,
 }
 
 yama_record *yama_first(const YAMA *yama) {
-  yama_record *result = _next(yama, sentinel(yama));
+  yama_record *result = _next(sentinel(yama));
   return sentinel_to_null(yama, result);
 }
 
 yama_record *yama_next(const YAMA *yama, yama_record *item) {
-  yama_record *result = _next(yama, item);
+  yama_record *result = _next(item);
   return sentinel_to_null(yama, result);
 }
 
@@ -189,8 +194,7 @@ static void yama_resize(YAMA * const yama, int newsize) {
   yama->payload->header.size = newsize;
 }
 
-static yama_record *_store(YAMA * const yama,
-			       char const *payload) {
+static yama_record *_store(YAMA * const yama, char const *payload) {
   int datalen = strlen(payload);
   int aligned_len = round_up_to(sizeof(yama_record) + datalen, 4);
   uint32_t oldsize = yama->payload->header.size;
@@ -198,7 +202,7 @@ static yama_record *_store(YAMA * const yama,
   yama_resize(yama, newsize);
   yama_record *result = offt_to_record(yama, oldsize);
   result->size = datalen;
-  result->list.next = NO_RECORD;
+  set_next(&result->list, NO_RECORD);
   result->list.previous = NO_RECORD;
   memcpy(result->payload, payload, datalen);
   return result;
