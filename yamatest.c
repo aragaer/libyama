@@ -67,7 +67,9 @@ static char *test_file_create() {
   mu_assert("Open empty file", yama != NULL);
   char magic[4];
   lseek(fd, 0, SEEK_SET);
-  read(fd, magic, 4);
+  int read_result = read(fd, magic, 4);
+  mu_assert("Should be able to read first 4 bytes",
+	    read_result == 4);
   mu_assert("File should start with magic",
 	    memcmp(magic, "YAMA", 4) == 0);
   unlink(template);

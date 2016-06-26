@@ -1,5 +1,6 @@
 #define _GNU_SOURCE
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
@@ -91,7 +92,8 @@ YAMA *yama_read(int fd) {
   int bytes_read = read(fd, &header, sizeof(header));
   DPRINTF("Bytes read: %d\n", bytes_read);
   if (bytes_read == 0) {
-    ftruncate(fd, sizeof(header));
+    if (ftruncate(fd, sizeof(header)) == -1)
+      perror("ftruncate");
     result->payload = mmap(NULL, sizeof(header), PROT_READ | PROT_WRITE,
 			   MAP_SHARED, fd, 0);
     init_payload(result->payload);
@@ -110,6 +112,10 @@ void yama_release(YAMA *yama) {
   free(yama);
 }
 
+static inline yama_record *sentinel(const YAMA *yama) {
+  return &yama->payload->header.sentinel;
+}
+
 static inline yama_record *_next(const YAMA *yama, yama_record *item) {
   return offt_to_record(yama, item->next);
 }
@@ -118,13 +124,27 @@ static inline yama_record *_prev(const YAMA *yama, yama_record *item) {
   return offt_to_record(yama, item->previous);
 }
 
+static inline void _remove(const YAMA *yama, yama_record *item) {
+  _next(yama, item)->previous = item->previous;
+  _prev(yama, item)->next = item->next;
+}
+
+static inline void _insert_after(const YAMA *yama,
+				 yama_record *item,
+				 yama_record *new) {
+  new->next = item->next;
+  new->previous = record_to_offt(yama, item);
+  _next(yama, item)->previous = record_to_offt(yama, new);
+  item->next = record_to_offt(yama, new);
+}
+
 static inline yama_record *sentinel_to_null(const YAMA *yama,
 					    yama_record *item) {
-  return item == &yama->payload->header.sentinel ? NULL : item;
+  return item == sentinel(yama) ? NULL : item;
 }
 
 yama_record *yama_first(const YAMA *yama) {
-  yama_record *result = _next(yama, &yama->payload->header.sentinel);
+  yama_record *result = _next(yama, sentinel(yama));
   return sentinel_to_null(yama, result);
 }
 
@@ -144,12 +164,13 @@ static void yama_resize(YAMA * const yama, int newsize) {
   else {
     yama->payload = mremap(yama->payload, yama->payload->header.size,
 			   newsize, MREMAP_MAYMOVE);
-    ftruncate(yama->fd, newsize);
+    if (ftruncate(yama->fd, newsize) == -1)
+      perror("ftruncate");
   }
   yama->payload->header.size = newsize;
 }
 
-static yama_record *yama_store(YAMA * const yama,
+static yama_record *_store(YAMA * const yama,
 			       char const *payload) {
   int datalen = strlen(payload);
   int aligned_len = round_up_to(sizeof(yama_record) + datalen, 4);
@@ -166,29 +187,24 @@ static yama_record *yama_store(YAMA * const yama,
 
 yama_record *yama_add(YAMA * const yama,
 		      const char *payload) {
-  return yama_insert_after(yama, &yama->payload->header.sentinel, payload);
+  yama_record *result = _store(yama, payload);
+  _insert_after(yama, sentinel(yama), result);
+  return result;
 }
 
 yama_record *yama_insert_after(YAMA * const yama,
 			       yama_record *item,
 			       char const *payload) {
-  uint32_t result_offt = yama->payload->header.size;
-  yama_record *result = yama_store(yama, payload);
-  result->previous = record_to_offt(yama, item);
-  result->next = item->next;
-  _next(yama, item)->previous = result_offt;
-  item->next = result_offt;
+  yama_record *result = _store(yama, payload);
+  _insert_after(yama, item, result);
   return result;
 }
 
 yama_record *yama_edit(YAMA * const yama,
 		       yama_record *item,
 		       char const *payload) {
-  uint32_t result_offt = yama->payload->header.size;
-  yama_record *result = yama_store(yama, payload);
-  result->next = item->next;
-  result->previous = item->previous;
-  _prev(yama, item)->next = result_offt;
-  _next(yama, item)->previous = result_offt;
+  yama_record *result = _store(yama, payload);
+  _remove(yama, item);
+  _insert_after(yama, _prev(yama, item), result);
   return result;
 }

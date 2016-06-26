@@ -1,4 +1,4 @@
-CFLAGS += -Werror -Wall
+CFLAGS += -Werror -Wall -O3
 all: libyama.so yamaclient
 
 test: yamatest
@@ -19,6 +19,7 @@ yamaclient: client.o libyama.so
 
 libyama.so: yama.o
 	$(CC) -shared -fPIC -o $@ $^
+	strip $@
 
 .PHONY: all test clienttest clean
 
