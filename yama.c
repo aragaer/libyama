@@ -47,9 +47,7 @@ static void init_payload(struct yama_payload *payload) {
   int size = sizeof(struct yama_payload);
   memset(payload, 0, size);
   payload->header.size = size;
-  list_item *sentinel = &payload->header.sentinel;
-  set_next(sentinel, (int32_t) sentinel);
-  set_prev(sentinel, (int32_t) sentinel);
+  list_init(&payload->header.sentinel);
   memcpy(payload->header.magic, _magic, sizeof(_magic));
 }
 
@@ -148,7 +146,7 @@ static yama_record *_store(YAMA * const yama, char const *payload) {
   uint32_t oldsize = yama->payload->header.size;
   int newsize = oldsize + aligned_len;
   yama_resize(yama, newsize);
-  yama_record *result = (yama_record *) ((int32_t) yama->payload + oldsize);
+  yama_record *result = (yama_record *) ((char *) yama->payload + oldsize);
   result->size = datalen;
   memset(&result->list, 0, sizeof(list_item));
   memcpy(result->payload, payload, datalen);
