@@ -4,6 +4,7 @@ all: libyama.so yamaclient
 test: yamatest
 	./yamatest -v$(TEST_VERBOSE)
 	$(MAKE) clienttest
+	@echo PASSED
 
 yamatest: yamatest.o yama.o
 

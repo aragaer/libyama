@@ -1,4 +1,5 @@
 #define _GNU_SOURCE
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
@@ -6,7 +7,6 @@
 #include <unistd.h>
 #include "yama.h"
 
-#define NO_RECORD ((int32_t) -1)
 // #define DEBUG
 
 #ifdef DEBUG
@@ -21,7 +21,7 @@
 struct __attribute__((packed, aligned(4))) yama_header {
   char magic[4];
   int32_t size;
-  uint32_t first;
+  yama_record sentinel;
 };
 
 struct __attribute__((packed, aligned(4))) yama_payload {
@@ -29,11 +29,26 @@ struct __attribute__((packed, aligned(4))) yama_payload {
   char payload[0];
 };
 
+#define NO_RECORD ((int32_t) offsetof(struct yama_payload, header.sentinel))
+
 static char _magic[] = {'Y', 'A', 'M', 'A'};
 
-static inline int round_up_to(uint32_t value, int round) {
+static inline int32_t round_up_to(uint32_t value, const int round) {
   return (value & ~(round - 1)) + round;
 }
+
+static inline yama_record *offt_to_record(const YAMA *yama,
+					  const int32_t offt) {
+  char *ptr = (char *) yama->payload + offt;
+  return (yama_record *) ptr;
+}
+
+static inline int32_t record_to_offt(const YAMA *yama,
+				     const yama_record *item) {
+  size_t diff = (char *) item - (char *) yama->payload;
+  return (int32_t) diff;
+}
+
 
 static struct yama_payload *alloc_payload() {
   return malloc(sizeof(struct yama_payload));
@@ -43,7 +58,10 @@ static void init_payload(struct yama_payload *payload) {
   int size = sizeof(struct yama_payload);
   memset(payload, 0, size);
   payload->header.size = size;
-  payload->header.first = NO_RECORD;
+  payload->header.sentinel.next =
+    payload->header.sentinel.previous = offsetof(struct yama_payload,
+						 header.sentinel);
+  payload->header.sentinel.size = sizeof(yama_record);
   memcpy(payload->header.magic, _magic, sizeof(_magic));
 }
 
@@ -92,32 +110,32 @@ void yama_release(YAMA *yama) {
   free(yama);
 }
 
-static inline yama_record *offt_to_record(const YAMA *yama,
-					  int32_t offt) {
-  if (offt == NO_RECORD)
-    return NULL;
-  char *ptr = (char *) yama->payload + offt;
-  return (yama_record *) ptr;
-}
-
-static inline int32_t record_to_offt(const YAMA *yama,
-				      const yama_record *item) {
-  if (item == NULL)
-    return -1;
-  size_t diff = (char *) item - (char *) yama->payload;
-  return (int32_t) diff;
-}
-
-yama_record *yama_first(const YAMA *yama) {
-  return offt_to_record(yama, yama->payload->header.first);
-}
-
-yama_record *yama_next(const YAMA *yama, yama_record *item) {
+static inline yama_record *_next(const YAMA *yama, yama_record *item) {
   return offt_to_record(yama, item->next);
 }
 
-yama_record *yama_prev(const YAMA *yama, yama_record *item) {
+static inline yama_record *_prev(const YAMA *yama, yama_record *item) {
   return offt_to_record(yama, item->previous);
+}
+
+static inline yama_record *sentinel_to_null(const YAMA *yama,
+					    yama_record *item) {
+  return item == &yama->payload->header.sentinel ? NULL : item;
+}
+
+yama_record *yama_first(const YAMA *yama) {
+  yama_record *result = _next(yama, &yama->payload->header.sentinel);
+  return sentinel_to_null(yama, result);
+}
+
+yama_record *yama_next(const YAMA *yama, yama_record *item) {
+  yama_record *result = _next(yama, item);
+  return sentinel_to_null(yama, result);
+}
+
+yama_record *yama_prev(const YAMA *yama, yama_record *item) {
+  yama_record *result = _prev(yama, item);
+  return sentinel_to_null(yama, result);
 }
 
 static void yama_resize(YAMA * const yama, int newsize) {
@@ -148,14 +166,7 @@ static yama_record *yama_store(YAMA * const yama,
 
 yama_record *yama_add(YAMA * const yama,
 		      const char *payload) {
-  uint32_t result_offt = yama->payload->header.size;
-  yama_record *result = yama_store(yama, payload);
-  if (yama->payload->header.first != NO_RECORD)
-    yama_first(yama)->previous = result_offt;
-  result->next = yama->payload->header.first;
-  result->previous = NO_RECORD;
-  yama->payload->header.first = result_offt;
-  return result;
+  return yama_insert_after(yama, &yama->payload->header.sentinel, payload);
 }
 
 yama_record *yama_insert_after(YAMA * const yama,
@@ -165,9 +176,7 @@ yama_record *yama_insert_after(YAMA * const yama,
   yama_record *result = yama_store(yama, payload);
   result->previous = record_to_offt(yama, item);
   result->next = item->next;
-  yama_record *next = yama_next(yama, item);
-  if (next)
-    next->previous = result_offt;
+  _next(yama, item)->previous = result_offt;
   item->next = result_offt;
   return result;
 }
@@ -179,13 +188,7 @@ yama_record *yama_edit(YAMA * const yama,
   yama_record *result = yama_store(yama, payload);
   result->next = item->next;
   result->previous = item->previous;
-  yama_record *prev = yama_prev(yama, item);
-  if (prev == NULL)
-    yama->payload->header.first = result_offt;
-  else
-    prev->next = result_offt;
-  yama_record *next = yama_next(yama, item);
-  if (next)
-    next->previous = result_offt;
+  _prev(yama, item)->next = result_offt;
+  _next(yama, item)->previous = result_offt;
   return result;
 }
