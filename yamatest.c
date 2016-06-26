@@ -25,10 +25,10 @@ static char *test_add_item() {
   mu_assert("Record created",
 	    item != NULL);
   mu_assert("Payload size is correct",
-	    item->size == strlen("Hello, world"));
+	    size(item) == strlen("Hello, world"));
   mu_assert("Payload contents are correct",
-	    memcmp(item->payload, "Hello, world",
-		   item->size) == 0);
+	    memcmp(payload(item), "Hello, world",
+		   size(item)) == 0);
   mu_assert("This is also a last one",
 	    yama_next(yama, item) == NULL);
   mu_assert("Added is first",
@@ -50,12 +50,12 @@ static char *test_simple_usage() {
   yama_record *item;
   item = yama_first(yama);
   mu_assert("Another record",
-	    strncmp(item->payload, "Another record",
-		    item->size) == 0);
+	    strncmp(payload(item), "Another record",
+		    size(item)) == 0);
   item = yama_next(yama, item);
   mu_assert("Hello, world",
-	    strncmp(item->payload, "Hello, world",
-		    item->size) == 0);
+	    strncmp(payload(item), "Hello, world",
+		    size(item)) == 0);
   yama_release(yama);
   return NULL;
 }
@@ -92,13 +92,13 @@ static char *test_file_read_write() {
   yama_record *item = yama_first(yama2);
   mu_assert("Not empty", item != NULL);
   mu_assert("Hello, world",
-	    strncmp(item->payload, "Hello, world",
-		    item->size) == 0);
+	    strncmp(payload(item), "Hello, world",
+		    size(item)) == 0);
   item = yama_next(yama2, item);
   mu_assert("Not empty", item != NULL);
   mu_assert("Initial item",
-	    strncmp(item->payload, "Initial item",
-		    item->size) == 0);
+	    strncmp(payload(item), "Initial item",
+		    size(item)) == 0);
   struct stat buf;
   fstat(fd, &buf);
   mu_assert("File size is correct",
@@ -116,14 +116,14 @@ static char *test_insert() {
 
   item = yama_first(yama);
   mu_assert("Hello, world",
-	    strncmp(item->payload, "Hello, world",
-		    item->size) == 0);
+	    strncmp(payload(item), "Hello, world",
+		    size(item)) == 0);
   item = yama_next(yama, item);
   mu_assert("Inserted",
 	    item != NULL);
   mu_assert("Another record",
-	    strncmp(item->payload, "Another record",
-		    item->size) == 0);
+	    strncmp(payload(item), "Another record",
+		    size(item)) == 0);
   yama_release(yama);
   return NULL;
 }
@@ -137,8 +137,8 @@ static char *test_edit() {
 
   item = yama_first(yama);
   mu_assert("Howdy, world",
-	    strncmp(item->payload, "Howdy, world",
-		    item->size) == 0);
+	    strncmp(payload(item), "Howdy, world",
+		    size(item)) == 0);
   mu_assert("Last one",
 	    yama_next(yama, item) == NULL);
   yama_release(yama);

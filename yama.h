@@ -2,12 +2,7 @@
 
 #include <stdint.h>
 
-typedef struct {
-  int32_t size;
-  int32_t next;
-  int32_t previous;
-  char payload[0];
-} yama_record;
+typedef struct yama_record_s yama_record;
 
 typedef struct {
   int fd;
@@ -26,5 +21,8 @@ yama_record *yama_insert_after(YAMA * const,
 			       char const * const);
 yama_record *yama_edit(YAMA * const, yama_record *,
 		       char const * const);
+
+int size(yama_record const * const);
+const char *payload(yama_record const * const);
 
 #endif  // _YAMA_H_

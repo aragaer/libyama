@@ -19,6 +19,17 @@
 #define DPRINTF(...)
 #endif
 
+typedef struct __attribute__((packed, aligned(4))) {
+  int32_t next;
+  int32_t previous;
+} linked_list;
+
+struct __attribute__((packed, aligned(4))) yama_record_s {
+  int32_t size;
+  linked_list list;
+  char payload[0];
+};
+
 struct __attribute__((packed, aligned(4))) yama_header {
   char magic[4];
   int32_t size;
@@ -59,9 +70,9 @@ static void init_payload(struct yama_payload *payload) {
   int size = sizeof(struct yama_payload);
   memset(payload, 0, size);
   payload->header.size = size;
-  payload->header.sentinel.next =
-    payload->header.sentinel.previous = offsetof(struct yama_payload,
-						 header.sentinel);
+  payload->header.sentinel.list.next =
+    payload->header.sentinel.list.previous = offsetof(struct yama_payload,
+						      header.sentinel);
   payload->header.sentinel.size = sizeof(yama_record);
   memcpy(payload->header.magic, _magic, sizeof(_magic));
 }
@@ -74,7 +85,7 @@ static struct yama_payload *new_payload() {
 
 static YAMA *yama_alloc() {
   YAMA *result = malloc(sizeof(YAMA));
-  memset(result, 0, sizeof(*result));
+  memset(result, 0, sizeof(YAMA));
   return result;
 }
 
@@ -117,25 +128,25 @@ static inline yama_record *sentinel(const YAMA *yama) {
 }
 
 static inline yama_record *_next(const YAMA *yama, yama_record *item) {
-  return offt_to_record(yama, item->next);
+  return offt_to_record(yama, item->list.next);
 }
 
 static inline yama_record *_prev(const YAMA *yama, yama_record *item) {
-  return offt_to_record(yama, item->previous);
+  return offt_to_record(yama, item->list.previous);
 }
 
 static inline void _remove(const YAMA *yama, yama_record *item) {
-  _next(yama, item)->previous = item->previous;
-  _prev(yama, item)->next = item->next;
+  _next(yama, item)->list.previous = item->list.previous;
+  _prev(yama, item)->list.next = item->list.next;
 }
 
 static inline void _insert_after(const YAMA *yama,
 				 yama_record *item,
 				 yama_record *new) {
-  new->next = item->next;
-  new->previous = record_to_offt(yama, item);
-  _next(yama, item)->previous = record_to_offt(yama, new);
-  item->next = record_to_offt(yama, new);
+  new->list.next = item->list.next;
+  new->list.previous = record_to_offt(yama, item);
+  _next(yama, item)->list.previous = record_to_offt(yama, new);
+  item->list.next = record_to_offt(yama, new);
 }
 
 static inline yama_record *sentinel_to_null(const YAMA *yama,
@@ -156,6 +167,14 @@ yama_record *yama_next(const YAMA *yama, yama_record *item) {
 yama_record *yama_prev(const YAMA *yama, yama_record *item) {
   yama_record *result = _prev(yama, item);
   return sentinel_to_null(yama, result);
+}
+
+int size(yama_record const * const item) {
+  return item->size;
+}
+
+const char *payload(yama_record const * const item) {
+  return item->payload;
 }
 
 static void yama_resize(YAMA * const yama, int newsize) {
@@ -179,8 +198,8 @@ static yama_record *_store(YAMA * const yama,
   yama_resize(yama, newsize);
   yama_record *result = offt_to_record(yama, oldsize);
   result->size = datalen;
-  result->next = NO_RECORD;
-  result->previous = NO_RECORD;
+  result->list.next = NO_RECORD;
+  result->list.previous = NO_RECORD;
   memcpy(result->payload, payload, datalen);
   return result;
 }
