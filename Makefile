@@ -1,4 +1,5 @@
 CFLAGS += -Werror -Wall -O3
+LDFLAGS += -flto
 LIB_SRC = yama.c list.o
 LIB_OBJ = $(subst .c,.o,$(LIB_SRC))
 
