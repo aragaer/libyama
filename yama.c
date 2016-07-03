@@ -23,6 +23,7 @@
 struct __attribute__((packed, aligned(4))) yama_record_s {
   int32_t size;
   list_item list;
+  list_item log;
   char payload[0];
 };
 
@@ -149,6 +150,7 @@ static yama_record *_store(YAMA * const yama, char const *payload) {
   yama_record *result = (yama_record *) ((char *) yama->payload + oldsize);
   result->size = datalen;
   memset(&result->list, 0, sizeof(list_item));
+  memset(&result->log, 0, sizeof(list_item));
   memcpy(result->payload, payload, datalen);
   return result;
 }
@@ -173,5 +175,14 @@ yama_record *yama_edit(YAMA * const yama,
   yama_record *result = _store(yama, payload);
   list_remove(&item->list);
   list_insert_after(&result->list, prev(&item->list));
+  list_insert_after(&item->log, &result->log);
   return result;
+}
+
+yama_record *yama_before(yama_record const * const item,
+			 yama_record const * const history) {
+  list_item *log_next = next(&history->log);
+  if (log_next == &item->log)
+    return NULL;
+  return container_of(log_next, yama_record, log);
 }

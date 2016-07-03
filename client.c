@@ -8,14 +8,14 @@
 static void read_yama(YAMA *yama) {
   yama_record *item;
   for (item = yama_first(yama); item; item = yama_next(yama, item))
-    printf("%*s\n", size(item), payload(item));
+    printf("%.*s\n", size(item), payload(item));
 }
 
 int main(int argc, char *argv[]) {
   int fd = open(argv[2], O_RDWR | O_CREAT, S_IWUSR | S_IRUSR);
   if (fd == -1) {
     perror("open");
-    exit(-1);
+    exit(EXIT_FAILURE);
   }
 
   YAMA *yama = yama_read(fd);

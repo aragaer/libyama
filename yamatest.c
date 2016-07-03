@@ -190,6 +190,25 @@ static char *test_traverse(void (*fill_func)(YAMA *, yama_record *[], int)) {
   return verification_result;
 }
 
+static char *test_history() {
+  YAMA *yama = yama_new();
+  yama_record *items[RECORDS];
+  fill_update(yama, items, RECORDS);
+
+  mu_assert("First doesn't have previous version",
+	    yama_before(items[0], items[0]) == NULL);
+
+  yama_record *updated = items[1];
+  yama_record *old = yama_before(updated, updated);
+  mu_assert("Does have previous version", old != NULL);
+  mu_assert("x", strncmp(payload(old), "x", size(old)) == 0);
+  mu_assert("No older entry",
+	    yama_before(updated, old) == NULL);
+
+  yama_release(yama);
+  return NULL;
+}
+
 static char *run_all_tests() {
   mu_run_test(test_yama_object);
   mu_run_test(test_add_item);
@@ -201,6 +220,7 @@ static char *run_all_tests() {
   mu_run_test(test_traverse, sequential_fill);
   mu_run_test(test_traverse, striped_fill);
   mu_run_test(test_traverse, fill_update);
+  mu_run_test(test_history);
   return NULL;
 }
 

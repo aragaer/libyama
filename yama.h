@@ -22,6 +22,9 @@ yama_record *yama_insert_after(YAMA * const,
 yama_record *yama_edit(YAMA * const, yama_record *,
 		       char const * const);
 
+yama_record *yama_before(yama_record const * const,
+			 yama_record const * const);
+
 int size(yama_record const * const);
 const char *payload(yama_record const * const);
 
