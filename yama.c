@@ -19,29 +19,28 @@
 #define DPRINTF(...)
 #endif
 
-struct __attribute__((packed, aligned(4))) yama_record_s {
+#define ALIGN 4
+struct __attribute__((packed, aligned(ALIGN))) yama_record_s {
   int32_t size;
   list_item list;
   list_item log;
   char payload[0];
 };
 
-struct __attribute__((packed, aligned(4))) yama_header {
-  char magic[4];
+static char _magic[] = {'Y', 'A', 'M', 'A'};
+
+struct __attribute__((packed, aligned(ALIGN))) yama_header {
+  char magic[sizeof(_magic)];
   int32_t size;
   list_item sentinel;
 };
 
-struct __attribute__((packed, aligned(4))) yama_payload {
+struct __attribute__((packed, aligned(ALIGN))) yama_payload {
   struct yama_header header;
   char payload[0];
 };
 
-static char _magic[] = {'Y', 'A', 'M', 'A'};
-
-static inline int32_t round_up_to(uint32_t value, const int round) {
-  return (value & ~(round - 1)) + round;
-}
+#define ROUND_UP(size) (((size) + ALIGN - 1) & ~(ALIGN - 1))
 
 static void init_payload(struct yama_payload *payload) {
   int size = sizeof(struct yama_payload);
@@ -126,7 +125,7 @@ static void yama_resize(YAMA * const yama, int newsize) {
 
 static yama_record *_store(YAMA * const yama, char const *payload) {
   int datalen = strlen(payload);
-  int aligned_len = round_up_to(sizeof(yama_record) + datalen, 4);
+  int aligned_len = ROUND_UP(sizeof(yama_record) + datalen);
   uint32_t oldsize = yama->payload->header.size;
   int newsize = oldsize + aligned_len;
   yama_resize(yama, newsize);
