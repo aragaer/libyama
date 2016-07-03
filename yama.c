@@ -12,7 +12,6 @@
 // #define DEBUG
 
 #ifdef DEBUG
-#include <stdio.h>
 #define DPRINTF(...) do { \
     fprintf(stderr, __VA_ARGS__); \
   } while(0);
@@ -52,27 +51,18 @@ static void init_payload(struct yama_payload *payload) {
   memcpy(payload->header.magic, _magic, sizeof(_magic));
 }
 
-static struct yama_payload *new_payload() {
-  struct yama_payload *result = malloc(sizeof(struct yama_payload));
-  init_payload(result);
-  return result;
-}
-
-static YAMA *yama_alloc() {
-  YAMA *result = malloc(sizeof(YAMA));
-  memset(result, 0, sizeof(YAMA));
-  return result;
-}
-
 YAMA *yama_new() {
-  YAMA *result = yama_alloc();
-  result->fd = -1;
-  result->payload = new_payload();
-  return result;
+  char template[] = ".yamaXXXXXX";
+  int fd = mkstemp(template);
+  if (fd == -1)
+    perror("mkstemp");
+  else
+    unlink(template);
+  return yama_read(fd);
 }
 
 YAMA *yama_read(int fd) {
-  YAMA *result = yama_alloc();
+  YAMA *result = calloc(1, sizeof(YAMA));
   result->fd = fd;
   struct yama_header header;
   int bytes_read = read(fd, &header, sizeof(header));
@@ -91,10 +81,7 @@ YAMA *yama_read(int fd) {
 }
 
 void yama_release(YAMA *yama) {
-  if (yama->fd == -1)
-    free(yama->payload);
-  else
-    munmap(yama->payload, yama->payload->header.size);
+  munmap(yama->payload, yama->payload->header.size);
   free(yama);
 }
 
@@ -130,14 +117,10 @@ const char *payload(yama_record const * const item) {
 }
 
 static void yama_resize(YAMA * const yama, int newsize) {
-  if (yama->fd == -1)
-    yama->payload = realloc(yama->payload, newsize);
-  else {
-    yama->payload = mremap(yama->payload, yama->payload->header.size,
-			   newsize, MREMAP_MAYMOVE);
-    if (ftruncate(yama->fd, newsize) == -1)
-      perror("ftruncate");
-  }
+  yama->payload = mremap(yama->payload, yama->payload->header.size,
+			 newsize, MREMAP_MAYMOVE);
+  if (ftruncate(yama->fd, newsize) == -1)
+    perror("ftruncate");
   yama->payload->header.size = newsize;
 }
 
