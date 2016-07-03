@@ -1,4 +1,5 @@
 #ifndef _YAMA_H_
+#define _YAMA_H_
 
 #include <stdint.h>
 

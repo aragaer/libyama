@@ -1,4 +1,7 @@
-/* file: minunit.h */
+#ifndef _TEST_MINUNIT_H_
+#define _TEST_MINUNIT_H_
+
+#include <stdio.h>
 #define mu_assert(message, test) do {		\
     if (verbose > 1)				\
       printf("checking " #test "\n");		\
@@ -18,3 +21,5 @@
 
 extern int tests_run;
 extern int verbose;
+
+#endif

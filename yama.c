@@ -175,7 +175,7 @@ yama_record *yama_edit(YAMA * const yama,
   yama_record *result = _store(yama, payload);
   list_remove(&item->list);
   list_insert_after(&result->list, prev(&item->list));
-  list_insert_after(&item->log, &result->log);
+  list_insert_after(&result->log, prev(&item->log));
   return result;
 }
 
