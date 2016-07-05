@@ -9,11 +9,13 @@ static char *verify_integrity(YAMA *yama, yama_record *items[], int count) {
   int i;
   for (i = 0; i < count; i++) {
     yama_record *expected_next = i == 0 ? NULL : items[i-1];
-    yama_record *expected_prev = i == count-1 ? NULL : items[i+1];
     mu_assert("Check next",
 	      yama_next(yama, items[i]) == expected_next);
+    /*
+    yama_record *expected_prev = i == count-1 ? NULL : items[i+1];
     mu_assert("Check previous",
 	      yama_prev(yama, items[i]) == expected_prev);
+    */
   }
   return NULL;
 }

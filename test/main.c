@@ -1,6 +1,7 @@
 #include <string.h>
 #include "basic.h"
 #include "files.h"
+#include "list.h"
 #include "minunit.h"
 #include "traverse.h"
 #include "yama.h"
@@ -58,6 +59,7 @@ static char *run_all_tests() {
   mu_run_test(test_traverse, striped_fill);
   mu_run_test(test_traverse, fill_update);
   mu_run_test(test_history);
+  mu_run_test(list_tests);
   return NULL;
 }
 
