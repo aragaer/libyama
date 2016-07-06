@@ -115,8 +115,7 @@ static void yama_resize(YAMA * const yama, int newsize) {
   yama->payload->header.size = newsize;
 }
 
-static yama_record *_store(YAMA * const yama, char const *payload) {
-  int datalen = strlen(payload);
+static yama_record *_yama_store(YAMA * const yama, char const *payload, size_t datalen) {
   int aligned_len = ROUND_UP(sizeof(yama_record) + datalen);
   uint32_t oldsize = yama->payload->header.size;
   int newsize = oldsize + aligned_len;
@@ -129,16 +128,20 @@ static yama_record *_store(YAMA * const yama, char const *payload) {
   return result;
 }
 
-yama_record *yama_add(YAMA * const yama, const char *payload) {
-  yama_record *result = _store(yama, payload);
+static yama_record *_yama_add(YAMA * const yama, const char *payload, size_t len) {
+  yama_record *result = _yama_store(yama, payload, len);
   list_insert(&result->list, yama->records);
   return result;
+}
+
+yama_record *yama_add(YAMA * const yama, const char *payload) {
+  return _yama_add(yama, payload, strlen(payload));
 }
 
 yama_record *yama_insert_after(YAMA * const yama,
 			       yama_record *item,
 			       char const *payload) {
-  yama_record *result = _store(yama, payload);
+  yama_record *result = _yama_store(yama, payload, strlen(payload));
   list_insert(&result->list, &item->list);
   return result;
 }
@@ -146,7 +149,7 @@ yama_record *yama_insert_after(YAMA * const yama,
 yama_record *yama_edit(YAMA * const yama,
 		       yama_record *item,
 		       char const *payload) {
-  yama_record *result = _store(yama, payload);
+  yama_record *result = _yama_store(yama, payload, strlen(payload));
   list_replace(&result->list, &item->list);
   list_add(&result->log, &item->log);
   return result;
@@ -158,4 +161,8 @@ yama_record *yama_before(yama_record *item,
   return log_next == NULL
     ? NULL
     : container_of(log_next, yama_record, log);
+}
+
+yama_record *yama_add_binary(YAMA *yama, char *data, size_t len) {
+  return _yama_add(yama, data, len);
 }

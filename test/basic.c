@@ -74,3 +74,20 @@ char *test_edit() {
   return NULL;
 }
 
+char *test_add_binary_data() {
+  YAMA *yama = yama_new();
+  char buf[] = {1, 2, 3, 4, 5};
+  yama_record *item = yama_add_binary(yama, buf, sizeof(buf));
+  mu_assert("Item is actually created", item != NULL);
+  mu_assert("Item is actually added", yama_first(yama) != NULL);
+  mu_assert("Item has correct size", size(item) == sizeof(buf));
+  mu_assert("Item contains the data", memcmp(payload(item), buf, size(item)) == 0);
+  yama_release(yama);
+  return NULL;
+}
+
+char *basic_tests() {
+  mu_run_test(test_add_binary_data);
+  return NULL;
+}
+

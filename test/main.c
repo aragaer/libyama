@@ -59,6 +59,7 @@ static char *run_all_tests() {
   mu_run_test(test_traverse, striped_fill);
   mu_run_test(test_traverse, fill_update);
   mu_run_test(test_history);
+  mu_run_test(basic_tests);
   mu_run_test(list_tests);
   return NULL;
 }

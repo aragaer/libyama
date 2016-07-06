@@ -24,6 +24,8 @@ yama_record *yama_insert_after(YAMA * const,
 yama_record *yama_edit(YAMA * const, yama_record *,
 		       char const * const);
 
+yama_record *yama_add_binary(YAMA *yama, char *data, size_t len);
+
 yama_record *yama_before(yama_record *item, yama_record *history);
 
 int size(yama_record const * const);
