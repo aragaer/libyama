@@ -2,7 +2,6 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -128,33 +127,6 @@ static yama_record *_yama_store(YAMA * const yama, char const *payload, size_t d
   return result;
 }
 
-static yama_record *_yama_add(YAMA * const yama, const char *payload, size_t len) {
-  yama_record *result = _yama_store(yama, payload, len);
-  list_insert(&result->list, yama->records);
-  return result;
-}
-
-yama_record *yama_add(YAMA * const yama, const char *payload) {
-  return _yama_add(yama, payload, strlen(payload));
-}
-
-yama_record *yama_insert_after(YAMA * const yama,
-			       yama_record *item,
-			       char const *payload) {
-  yama_record *result = _yama_store(yama, payload, strlen(payload));
-  list_insert(&result->list, &item->list);
-  return result;
-}
-
-yama_record *yama_edit(YAMA * const yama,
-		       yama_record *item,
-		       char const *payload) {
-  yama_record *result = _yama_store(yama, payload, strlen(payload));
-  list_replace(&result->list, &item->list);
-  list_add(&result->log, &item->log);
-  return result;
-}
-
 yama_record *yama_before(yama_record *item,
 			 yama_record *history) {
   list_head *log_next = list_get_next(&item->log, &history->log);
@@ -163,6 +135,22 @@ yama_record *yama_before(yama_record *item,
     : container_of(log_next, yama_record, log);
 }
 
-yama_record *yama_add_binary(YAMA *yama, char *data, size_t len) {
-  return _yama_add(yama, data, len);
+yama_record *yama_add(YAMA *yama, char *data, size_t len) {
+  yama_record *result = _yama_store(yama, data, len);
+  list_insert(&result->list, yama->records);
+  return result;
+}
+
+yama_record *yama_insert_after(YAMA *yama, yama_record *prev,
+			       char *data, size_t len) {
+  yama_record *result = _yama_store(yama, data, len);
+  list_insert(&result->list, &prev->list);
+  return result;
+}
+
+yama_record *yama_edit(YAMA *yama, yama_record *old, char *data, size_t len) {
+  yama_record *result = _yama_store(yama, data, len);
+  list_replace(&result->list, &old->list);
+  list_add(&result->log, &old->log);
+  return result;
 }

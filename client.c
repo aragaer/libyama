@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
   if (strcmp(argv[1], "read") == 0)
     read_yama(yama);
   else if (strcmp(argv[1], "write") == 0)
-    yama_add(yama, argv[3]);
+    yama_add_string(yama, argv[3]);
 
   yama_release(yama);
   close(fd);

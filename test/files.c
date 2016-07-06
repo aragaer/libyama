@@ -28,8 +28,8 @@ char *test_file_read_write() {
   char template[] = "yamaXXXXXX";
   int fd = mkstemp(template);
   YAMA *yama = yama_read(fd);
-  yama_add(yama, "Initial item");
-  yama_add(yama, "Hello, world");
+  yama_add_string(yama, "Initial item");
+  yama_add_string(yama, "Hello, world");
   yama_release(yama);
   close(fd);
 

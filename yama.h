@@ -2,6 +2,7 @@
 #define _YAMA_H_
 
 #include <stdint.h>
+#include <string.h>
 #include "list.h"
 
 typedef struct yama_record_s yama_record;
@@ -17,14 +18,23 @@ YAMA *yama_read(int fd);
 void yama_release(YAMA *);
 yama_record *yama_first(YAMA const * const);
 yama_record *yama_next(YAMA const * const, yama_record *);
-yama_record *yama_add(YAMA * const, char const * const);
-yama_record *yama_insert_after(YAMA * const,
-			       yama_record *,
-			       char const * const);
-yama_record *yama_edit(YAMA * const, yama_record *,
-		       char const * const);
 
-yama_record *yama_add_binary(YAMA *yama, char *data, size_t len);
+yama_record *yama_add(YAMA *yama, char *data, size_t len);
+yama_record *yama_insert_after(YAMA *yama, yama_record *prev, char *data, size_t len);
+yama_record *yama_edit(YAMA *yama, yama_record *old, char *data, size_t len);
+
+#define yama_add_string(yama, string) ({	\
+      char *_data = (string);			\
+      yama_add(yama, _data, strlen(_data)); })
+
+#define yama_insert_string_after(yama, prev, string) ({		\
+      char *_data = (string);					\
+      yama_insert_after(yama, prev, _data, strlen(_data)); })
+
+#define yama_edit_string(yama, old, string) ({		\
+      char *_data = (string);				\
+      yama_edit(yama, old, _data, strlen(_data)); })
+
 
 yama_record *yama_before(yama_record *item, yama_record *history);
 
