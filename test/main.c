@@ -48,6 +48,26 @@ static char *test_history() {
   return NULL;
 }
 
+static char *test_longer_history() {
+  YAMA *yama = yama_new();
+  int i;
+  yama_record *item = NULL;
+  for (i = 0; i < 5; i++)
+    if (item == NULL)
+      item = yama_add(yama, (char *) &i, sizeof(i));
+    else
+      item = yama_edit(yama, item, (char *) &i, sizeof(i));
+  yama_record *first = yama_first(yama);
+  for (i = 4, item = first; i >= 0; i--, item = yama_before(item, first)) {
+    mu_assert("Size is correct", size(item) == sizeof(i));
+    mu_assert("Contents are correct", memcmp(payload(item), &i, size(item)) == 0);
+  }
+  mu_assert("That was last in history", item == NULL);
+  mu_assert("Just one record", yama_next(yama, first) == NULL);
+  yama_release(yama);
+  return NULL;
+}
+
 static char *run_all_tests() {
   mu_run_test(test_add_item);
   mu_run_test(test_simple_usage);
@@ -61,6 +81,7 @@ static char *run_all_tests() {
   mu_run_test(test_history);
   mu_run_test(basic_tests);
   mu_run_test(list_tests);
+  mu_run_test(test_longer_history);
   return NULL;
 }
 

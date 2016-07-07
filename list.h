@@ -12,8 +12,8 @@ typedef struct __attribute__((packed, aligned(4))) {
 
 void list_init_head(list_head *head);
 
-int list_is_empty(list_head const * const);
 void list_add(list_head *new, list_head *head);
+void list_add_tail(list_head *new, list_head *head);
 void list_insert(list_head *new, list_head *prev);
 void list_replace(list_head *new, list_head *old);
 void list_remove(list_head *item);

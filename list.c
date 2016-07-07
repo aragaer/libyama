@@ -5,10 +5,6 @@ void list_init_head(list_head *head) {
   head->next = head->prev = 0;
 }
 
-int list_is_empty(list_head const * const head) {
-  return head->next == 0;
-}
-
 #define GET_NEXT(item) ({list_head *_p = (item);	\
       (list_head *) ((char *) _p + _p->next); })
 
@@ -32,13 +28,19 @@ void list_add(list_head *new, list_head *head) {
   SET_PREV(GET_NEXT(new), new);
 }
 
+void list_add_tail(list_head *new, list_head *head) {
+  list_add(new, GET_PREV(head));
+}
+
 void list_insert(list_head *new, list_head *prev) {
   list_add(new, prev);
 }
 
 void list_replace(list_head *new, list_head *old) {
   SET_NEXT(new, GET_NEXT(old));
+  SET_PREV(new, GET_PREV(old));
   SET_NEXT(GET_PREV(old), new);
+  SET_PREV(GET_NEXT(old), new);
 }
 
 void list_remove(list_head *item) {

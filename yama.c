@@ -151,6 +151,6 @@ yama_record *yama_insert_after(YAMA *yama, yama_record *prev,
 yama_record *yama_edit(YAMA *yama, yama_record *old, char *data, size_t len) {
   yama_record *result = _yama_store(yama, data, len);
   list_replace(&result->list, &old->list);
-  list_add(&result->log, &old->log);
+  list_add_tail(&result->log, &old->log);
   return result;
 }
