@@ -119,6 +119,10 @@ char *test_binary_edit() {
 }
 
 char *basic_tests() {
+  mu_run_test(test_add_item);
+  mu_run_test(test_simple_usage);
+  mu_run_test(test_insert);
+  mu_run_test(test_edit);
   mu_run_test(test_binary_add);
   mu_run_test(test_binary_insert);
   mu_run_test(test_binary_edit);
