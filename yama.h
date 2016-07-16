@@ -38,5 +38,8 @@ int size(yama_record const * const);
 const char *payload(yama_record const * const);
 
 yama_item *yama_first_item(YAMA *yama);
+yama_item *yama_next_item(yama_item *item);
+int item_size(yama_item *item);
+const char *item_payload(yama_item *item);
 
 #endif  // _YAMA_H_

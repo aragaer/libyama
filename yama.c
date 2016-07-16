@@ -156,5 +156,22 @@ void yama_mark_done(YAMA *yama, yama_record *item) {
 }
 
 yama_item *yama_first_item(YAMA *yama) {
+  yama_record *result = yama_first(yama);
+  return (yama_item *) result;
+}
+
+static inline yama_record *item2record(yama_item *item) {
+  return (yama_record *) item;
+}
+
+int item_size(yama_item *item) {
+  return size(item2record(item));
+}
+
+const char *item_payload(yama_item *item) {
+  return payload(item2record(item));
+}
+
+yama_item *yama_next_item(yama_item *item) {
   return NULL;
 }
