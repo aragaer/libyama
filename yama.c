@@ -154,3 +154,7 @@ yama_record *yama_edit(YAMA *yama, yama_record *old, char *data, size_t len) {
 void yama_mark_done(YAMA *yama, yama_record *item) {
   list_remove(&item->list);
 }
+
+yama_item *yama_first_item(YAMA *yama) {
+  return NULL;
+}
