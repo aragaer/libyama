@@ -6,14 +6,8 @@
 #include "list.h"
 
 typedef struct yama_record_s yama_record;
+typedef struct yama_s YAMA;
 
-typedef struct {
-  int fd;
-  list_head *records;
-  struct yama_payload *payload;
-} YAMA;
-
-YAMA *yama_new();
 YAMA *yama_read(int fd);
 void yama_release(YAMA *);
 yama_record *yama_first(YAMA const * const);

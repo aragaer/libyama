@@ -1,4 +1,6 @@
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <yama.h>
 #include "minunit.h"
 #include "basic.h"
@@ -140,3 +142,12 @@ char *basic_tests() {
   return NULL;
 }
 
+YAMA *yama_new() {
+  char template[] = ".yamaXXXXXX";
+  int fd = mkstemp(template);
+  if (fd == -1)
+    perror("mkstemp");
+  else
+    unlink(template);
+  return yama_read(fd);
+}

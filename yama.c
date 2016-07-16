@@ -18,6 +18,12 @@
 #define DPRINTF(...)
 #endif
 
+struct yama_s {
+  int fd;
+  list_head *records;
+  struct yama_payload *payload;
+};
+
 #define ALIGN 4
 struct __attribute__((packed, aligned(ALIGN))) yama_record_s {
   int32_t size;
@@ -47,16 +53,6 @@ static void init_payload(struct yama_payload *payload) {
   payload->header.size = size;
   list_init_head(&payload->header.records);
   memcpy(payload->header.magic, _magic, sizeof(_magic));
-}
-
-YAMA *yama_new() {
-  char template[] = ".yamaXXXXXX";
-  int fd = mkstemp(template);
-  if (fd == -1)
-    perror("mkstemp");
-  else
-    unlink(template);
-  return yama_read(fd);
 }
 
 YAMA *yama_read(int fd) {
