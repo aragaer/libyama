@@ -22,6 +22,7 @@ yama_record *yama_next(YAMA const * const, yama_record *);
 yama_record *yama_add(YAMA *yama, char *data, size_t len);
 yama_record *yama_insert_after(YAMA *yama, yama_record *prev, char *data, size_t len);
 yama_record *yama_edit(YAMA *yama, yama_record *old, char *data, size_t len);
+void yama_mark_done(YAMA *yama, yama_record *item);
 
 #define yama_add_string(yama, string) ({	\
       char *_data = (string);			\

@@ -118,6 +118,16 @@ char *test_binary_edit() {
   return NULL;
 }
 
+char *test_mark_done() {
+  YAMA *yama = yama_new();
+  char buf[] = {1, 2, 3, 4, 5};
+  yama_record *item1 = yama_add(yama, buf, sizeof(buf));
+  yama_mark_done(yama, item1);
+  mu_assert("No items", yama_first(yama) == NULL);
+  yama_release(yama);
+  return NULL;
+}
+
 char *basic_tests() {
   mu_run_test(test_add_item);
   mu_run_test(test_simple_usage);
@@ -126,6 +136,7 @@ char *basic_tests() {
   mu_run_test(test_binary_add);
   mu_run_test(test_binary_insert);
   mu_run_test(test_binary_edit);
+  mu_run_test(test_mark_done);
   return NULL;
 }
 

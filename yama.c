@@ -154,3 +154,7 @@ yama_record *yama_edit(YAMA *yama, yama_record *old, char *data, size_t len) {
   list_add_tail(&result->log, &old->log);
   return result;
 }
+
+void yama_mark_done(YAMA *yama, yama_record *item) {
+  list_remove(&item->list);
+}
