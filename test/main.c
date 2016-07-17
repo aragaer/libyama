@@ -6,6 +6,7 @@
 #include "list.h"
 #include "minunit.h"
 #include "traverse.h"
+#include "util.h"
 #include "yama.h"
 
 int tests_run;

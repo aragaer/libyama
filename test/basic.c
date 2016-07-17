@@ -1,9 +1,8 @@
-#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <yama.h>
 #include "minunit.h"
 #include "basic.h"
+#include "util.h"
 
 char *test_add_item() {
   YAMA *yama = yama_new();
@@ -140,14 +139,4 @@ char *basic_tests() {
   mu_run_test(test_binary_edit);
   mu_run_test(test_mark_done);
   return NULL;
-}
-
-YAMA *yama_new() {
-  char template[] = ".yamaXXXXXX";
-  int fd = mkstemp(template);
-  if (fd == -1)
-    perror("mkstemp");
-  else
-    unlink(template);
-  return yama_read(fd);
 }

@@ -22,6 +22,7 @@ struct yama_s {
   int fd;
   list_head *records;
   struct yama_payload *payload;
+  yama_item *first, *first_item, *last_item;
 };
 
 #define ALIGN 4
@@ -30,6 +31,12 @@ struct __attribute__((packed, aligned(ALIGN))) yama_record_s {
   list_head list;
   list_head log;
   char payload[0];
+};
+
+struct yama_item_s {
+  size_t record;
+  struct yama_item_s *next;
+  YAMA *yama;
 };
 
 static char _magic[] = {'Y', 'A', 'M', 'A'};
@@ -77,6 +84,12 @@ YAMA *yama_read(int fd) {
 
 void yama_release(YAMA *yama) {
   munmap(yama->payload, yama->payload->header.size);
+  yama_item *item = yama->first_item;
+  while (item) {
+    yama_item *to_free = item;
+    item = item->next;
+    free(to_free);
+  }
   free(yama);
 }
 
@@ -155,13 +168,30 @@ void yama_mark_done(YAMA *yama, yama_record *item) {
   list_remove(&item->list);
 }
 
-yama_item *yama_first_item(YAMA *yama) {
-  yama_record *result = yama_first(yama);
-  return (yama_item *) result;
+static inline yama_record *item2record(yama_item *item) {
+  return (yama_record *) ((char *) item->yama->payload + item->record);
 }
 
-static inline yama_record *item2record(yama_item *item) {
-  return (yama_record *) item;
+yama_item *record2item(YAMA *yama, yama_record *record) {
+  if (record == NULL)
+    return NULL;
+  size_t record_offt = (char *) record - (char *) yama->payload;
+  yama_item *item;
+  for (item = yama->first_item; item; item = item->next)
+    if (item->record == record_offt)
+      return item;
+  item = calloc(1, sizeof(*item));
+  item->yama = yama;
+  item->record = (char *) record - (char *) yama->payload;
+  if (yama->last_item != NULL)
+    yama->last_item->next = item;
+  if (yama->first_item == NULL)
+    yama->first_item = item;
+  return item;
+}
+
+yama_item *yama_first_item(YAMA *yama) {
+  return record2item(yama, yama_first(yama));
 }
 
 int item_size(yama_item *item) {
@@ -173,5 +203,6 @@ const char *item_payload(yama_item *item) {
 }
 
 yama_item *yama_next_item(yama_item *item) {
-  return NULL;
+  yama_record *record = yama_next(item->yama, item2record(item));
+  return record2item(item->yama, record);
 }

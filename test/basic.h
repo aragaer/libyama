@@ -9,6 +9,4 @@ char *test_insert();
 char *test_edit();
 char *basic_tests();
 
-YAMA *yama_new();
-
 #endif  // _TEST_BASIC_H_
