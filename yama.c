@@ -56,8 +56,39 @@ struct __attribute__((packed, aligned(ALIGN))) yama_payload {
 
 #define ROUND_UP(size) (((size) + ALIGN - 1) & ~(ALIGN - 1))
 
-yama_record *get_record(yama_item *item);
-yama_item *get_item(YAMA *yama, yama_record *record);
+static inline yama_record *get_record(yama_item *item) {
+  return (yama_record *) ((char *) item->yama->payload + item->record);
+}
+
+static inline yama_item *search_item(YAMA *yama, size_t record_offt) {
+  yama_item *item;
+  for (item = yama->first_item; item; item = item->next)
+    if (item->record == record_offt)
+      break;
+  return item;
+}
+
+static inline yama_item *new_item(YAMA *yama, size_t record_offt) {
+  yama_item *item = calloc(1, sizeof(*item));
+  item->yama = yama;
+  item->record = record_offt;
+  if (yama->first_item == NULL)
+    yama->first_item = item;
+  else
+    yama->last_item->next = item;
+  yama->last_item = item;
+  return item;
+}
+
+static inline yama_item *get_item(YAMA *yama, yama_record *record) {
+  if (record == NULL)
+    return NULL;
+  size_t record_offt = (char *) record - (char *) yama->payload;
+  yama_item *item = search_item(yama, record_offt);
+  if (item == NULL)
+    item = new_item(yama, record_offt);
+  return item;
+}
 
 static void init_payload(struct yama_payload *payload) {
   int size = sizeof(struct yama_payload);
@@ -148,15 +179,16 @@ yama_item *yama_add(YAMA *yama, char *data, size_t len) {
   return get_item(yama, record);
 }
 
-yama_item *yama_insert_after(YAMA *yama, yama_item *prev,
-			     char *data, size_t len) {
+yama_item *yama_insert_after(yama_item *prev, char *data, size_t len) {
+  YAMA *yama = prev->yama;
   yama_record *result = _yama_store(yama, data, len);
   yama_record *prev_record = get_record(prev);
   list_insert(&result->list, &prev_record->list);
   return get_item(yama, result);
 }
 
-yama_item *yama_edit(YAMA *yama, yama_item *old, char *data, size_t len) {
+yama_item *yama_edit(yama_item *old, char *data, size_t len) {
+  YAMA *yama = old->yama;
   yama_record *result = _yama_store(yama, data, len);
   yama_record *old_record = get_record(old);
   list_replace(&result->list, &old_record->list);
@@ -164,36 +196,13 @@ yama_item *yama_edit(YAMA *yama, yama_item *old, char *data, size_t len) {
   return get_item(yama, result);
 }
 
-void yama_mark_done(YAMA *yama, yama_item *item) {
+void yama_mark_done(yama_item *item) {
   list_remove(&get_record(item)->list);
-}
-
-static inline yama_record *item2record(yama_item *item) {
-  return (yama_record *) ((char *) item->yama->payload + item->record);
-}
-
-yama_item *record2item(YAMA *yama, yama_record *record) {
-  if (record == NULL)
-    return NULL;
-  size_t record_offt = (char *) record - (char *) yama->payload;
-  yama_item *item;
-  for (item = yama->first_item; item; item = item->next)
-    if (item->record == record_offt)
-      return item;
-  item = calloc(1, sizeof(*item));
-  item->yama = yama;
-  item->record = record_offt;
-  if (yama->first_item == NULL)
-    yama->first_item = item;
-  else
-    yama->last_item->next = item;
-  yama->last_item = item;
-  return item;
 }
 
 yama_item *yama_first(YAMA *yama) {
   list_head *first_head = list_get_next(yama->records, yama->records);
-  return record2item(yama, list_item_to_record(first_head));
+  return get_item(yama, list_item_to_record(first_head));
 }
 
 int item_size(yama_item *item) {
@@ -205,15 +214,7 @@ const char *item_payload(yama_item *item) {
 }
 
 yama_item *yama_next(yama_item *item) {
-  list_head *list_next = list_get_next(&item2record(item)->list,
+  list_head *list_next = list_get_next(&get_record(item)->list,
 				       item->yama->records);
-  return record2item(item->yama, list_item_to_record(list_next));
-}
-
-yama_record *get_record(yama_item *item) {
-  return item2record(item);
-}
-
-yama_item *get_item(YAMA *yama, yama_record *record) {
-  return record2item(yama, record);
+  return get_item(item->yama, list_item_to_record(list_next));
 }

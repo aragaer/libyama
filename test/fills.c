@@ -11,10 +11,10 @@ void striped_fill(YAMA *yama, yama_item *items[], int count) {
   for (i = 1; i < count; i+=2)
     items[i] = yama_add_string(yama, "x");
   for (i = 0; i < count; i+=2)
-    items[i] = yama_insert_string_after(yama, items[i+1], "x");
+    items[i] = yama_insert_string_after(items[i+1], "x");
 }
 
 void fill_update(YAMA *yama, yama_item *items[], int count) {
   sequential_fill(yama, items, count);
-  items[1] = yama_edit_string(yama, items[1], "y");
+  items[1] = yama_edit_string(items[1], "y");
 }

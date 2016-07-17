@@ -48,7 +48,7 @@ char *test_simple_usage() {
 char *test_insert() {
   YAMA *yama = yama_new();
   yama_item *item = yama_add_string(yama, "Hello, world");
-  yama_insert_string_after(yama, item, "Another record");
+  yama_insert_string_after(item, "Another record");
 
   item = yama_first(yama);
   mu_assert("Hello, world",
@@ -66,7 +66,7 @@ char *test_insert() {
 char *test_edit() {
   YAMA *yama = yama_new();
   yama_item *item = yama_add_string(yama, "Hello, world");
-  yama_item *item2 = yama_edit_string(yama, item, "Howdy, world");
+  yama_item *item2 = yama_edit_string(item, "Howdy, world");
   mu_assert("Stored new text", item2 != NULL);
   mu_assert("It is not old one", item2 != item);
 
@@ -96,8 +96,7 @@ char *test_binary_insert() {
   YAMA *yama = yama_new();
   char buf[] = {1, 2, 3, 4, 5};
   yama_item *item1 = yama_add(yama, buf, sizeof(buf));
-  yama_item *item2 = yama_insert_after(yama, item1,
-				       "Hello, world", strlen("Hello"));
+  yama_item *item2 = yama_insert_after(item1, "Hello, world", strlen("Hello"));
   mu_assert("Item is actually created", item2 != NULL);
   mu_assert("Item is not first", yama_first(yama) == item1);
   mu_assert("Item has correct size", size(item2) == strlen("Hello"));
@@ -111,8 +110,7 @@ char *test_binary_edit() {
   YAMA *yama = yama_new();
   char buf[] = {1, 2, 3, 4, 5};
   yama_item *item1 = yama_add(yama, buf, sizeof(buf));
-  yama_item *item2 = yama_edit(yama, item1,
-			       "Hello, world", strlen("Hello"));
+  yama_item *item2 = yama_edit(item1, "Hello, world", strlen("Hello"));
   mu_assert("Item is actually created", item2 != NULL);
   mu_assert("Item is actually added", yama_first(yama) == item2);
   mu_assert("Item has correct size", size(item2) == strlen("Hello"));
@@ -128,7 +126,7 @@ char *test_mark_done() {
   YAMA *yama = yama_new();
   char buf[] = {1, 2, 3, 4, 5};
   yama_item *item = yama_add(yama, buf, sizeof(buf));
-  yama_mark_done(yama, item);
+  yama_mark_done(item);
   mu_assert("No items", yama_first(yama) == NULL);
   yama_release(yama);
   return NULL;

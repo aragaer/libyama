@@ -36,7 +36,7 @@ static char *test_longer_history() {
   int i = 0;
   yama_item *item = yama_add(yama, (char *) &i, sizeof(i));
   for (i = 1; i < RECORDS; i++)
-    item = yama_edit(yama, item, (char *) &i, sizeof(i));
+    item = yama_edit(item, (char *) &i, sizeof(i));
   yama_item *first = yama_first(yama);
   for (item = first; item; item = yama_before(item, first)) {
     i--;
