@@ -74,10 +74,9 @@ YAMA *yama_read(int fd) {
     result->payload = mmap(NULL, sizeof(header), PROT_READ | PROT_WRITE,
 			   MAP_SHARED, fd, 0);
     init_payload(result->payload);
-  } else {
+  } else
     result->payload = mmap(NULL, header.size, PROT_READ | PROT_WRITE,
 			   MAP_SHARED, fd, 0);
-  }
   result->records = &result->payload->header.records;
   return result;
 }
@@ -107,7 +106,7 @@ const char *payload(yama_record const * const item) {
   return item->payload;
 }
 
-static void yama_resize(YAMA * const yama, int newsize) {
+static void _yama_resize(YAMA *yama, int newsize) {
   yama->payload = mremap(yama->payload, yama->payload->header.size,
 			 newsize, MREMAP_MAYMOVE);
   if (ftruncate(yama->fd, newsize) == -1)
@@ -116,11 +115,11 @@ static void yama_resize(YAMA * const yama, int newsize) {
   yama->records = &yama->payload->header.records;
 }
 
-static yama_record *_yama_store(YAMA * const yama, char const *payload, size_t datalen) {
+static yama_record *_yama_store(YAMA *yama, char *payload, size_t datalen) {
   int aligned_len = ROUND_UP(sizeof(yama_record) + datalen);
   uint32_t oldsize = yama->payload->header.size;
   int newsize = oldsize + aligned_len;
-  yama_resize(yama, newsize);
+  _yama_resize(yama, newsize);
   yama_record *result = (yama_record *) ((char *) yama->payload + oldsize);
   result->size = datalen;
   list_init_head(&result->list);
@@ -137,10 +136,10 @@ yama_record *yama_before(yama_record *item,
     : container_of(log_next, yama_record, log);
 }
 
-yama_record *yama_add(YAMA *yama, char *data, size_t len) {
-  yama_record *result = _yama_store(yama, data, len);
-  list_insert(&result->list, yama->records);
-  return result;
+yama_item *yama_add(YAMA *yama, char *data, size_t len) {
+  yama_record *record = _yama_store(yama, data, len);
+  list_insert(&record->list, yama->records);
+  return get_item(yama, record);
 }
 
 yama_record *yama_insert_after(YAMA *yama, yama_record *prev,

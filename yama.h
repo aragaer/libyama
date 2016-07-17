@@ -12,14 +12,14 @@ typedef struct yama_item_s yama_item;
 YAMA *yama_read(int fd);
 void yama_release(YAMA *);
 
-yama_record *yama_add(YAMA *yama, char *data, size_t len);
+yama_item *yama_add(YAMA *yama, char *data, size_t len);
 yama_record *yama_insert_after(YAMA *yama, yama_record *prev, char *data, size_t len);
 yama_record *yama_edit(YAMA *yama, yama_record *old, char *data, size_t len);
 void yama_mark_done(YAMA *yama, yama_record *item);
 
 #define yama_add_string(yama, string) ({	\
       char *_data = (string);			\
-      yama_add(yama, _data, strlen(_data)); })
+      get_record(yama_add(yama, _data, strlen(_data))); })
 
 #define yama_insert_string_after(yama, prev, string) ({		\
       char *_data = (string);					\
