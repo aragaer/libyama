@@ -22,18 +22,8 @@ struct yama_s {
   int fd;
   list_head *records;
   struct yama_payload *payload;
-  yama_item *first, *first_item, *last_item;
+  yama_item *first_item, *last_item;
 };
-
-#define ALIGN 4
-struct __attribute__((packed, aligned(ALIGN))) yama_record_s {
-  int32_t size;
-  list_head list;
-  list_head log;
-  char payload[0];
-};
-
-typedef struct yama_record_s yama_record;
 
 struct yama_item_s {
   size_t record;
@@ -41,16 +31,26 @@ struct yama_item_s {
   YAMA *yama;
 };
 
+#define ALIGN 4
+#define PACKED __attribute__((packed, aligned(ALIGN)))
+
+typedef struct PACKED {
+  int32_t size;
+  list_head list;
+  list_head log;
+  char payload[0];
+} yama_record;
+
 static char _magic[] = {'Y', 'A', 'M', 'A'};
 
-struct __attribute__((packed, aligned(ALIGN))) yama_header {
+typedef struct PACKED {
   char magic[sizeof(_magic)];
   int32_t size;
   list_head records;
-};
+} yama_header;
 
-struct __attribute__((packed, aligned(ALIGN))) yama_payload {
-  struct yama_header header;
+struct PACKED yama_payload {
+  yama_header header;
   char payload[0];
 };
 
@@ -101,7 +101,7 @@ static void init_payload(struct yama_payload *payload) {
 YAMA *yama_read(int fd) {
   YAMA *result = calloc(1, sizeof(YAMA));
   result->fd = fd;
-  struct yama_header header;
+  yama_header header;
   int bytes_read = read(fd, &header, sizeof(header));
   DPRINTF("Bytes read: %d\n", bytes_read);
   if (bytes_read == 0) {
@@ -203,14 +203,6 @@ void yama_mark_done(yama_item *item) {
 yama_item *yama_first(YAMA *yama) {
   list_head *first_head = list_get_next(yama->records, yama->records);
   return get_item(yama, list_item_to_record(first_head));
-}
-
-int item_size(yama_item *item) {
-  return size(item);
-}
-
-const char *item_payload(yama_item *item) {
-  return payload(item);
 }
 
 yama_item *yama_next(yama_item *item) {
