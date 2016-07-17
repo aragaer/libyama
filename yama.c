@@ -121,6 +121,7 @@ static void yama_resize(YAMA * const yama, int newsize) {
   if (ftruncate(yama->fd, newsize) == -1)
     perror("ftruncate");
   yama->payload->header.size = newsize;
+  yama->records = &yama->payload->header.records;
 }
 
 static yama_record *_yama_store(YAMA * const yama, char const *payload, size_t datalen) {

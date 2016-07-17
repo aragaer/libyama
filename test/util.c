@@ -26,5 +26,6 @@ void yama_relocate(YAMA *yama) {
   void *to_unmap = yama->payload;
   yama->payload = mmap(NULL, size, PROT_READ | PROT_WRITE,
 		       MAP_SHARED, yama->fd, 0);
+  yama->records += yama->payload - to_unmap;
   munmap(to_unmap, size);
 }
