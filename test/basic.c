@@ -10,20 +10,21 @@ char *test_add_item() {
   mu_assert("Is empty initially",
 	    yama_first_item(yama) == NULL);
 
-  yama_record *item = yama_add_string(yama, "Hello, world");
+  yama_record *record = yama_add_string(yama, "Hello, world");
+  yama_item *item = yama_first_item(yama);
   mu_assert("Record created", item != NULL);
   mu_assert("Payload size is correct",
-	    size(item) == strlen("Hello, world"));
+	    item_size(item) == strlen("Hello, world"));
   mu_assert("Payload contents are correct",
-	    memcmp(payload(item), "Hello, world", size(item)) == 0);
+	    memcmp(item_payload(item), "Hello, world",
+		   item_size(item)) == 0);
+  mu_assert("Added is first", get_record(item) == record);
   mu_assert("This is also a last one",
-	    yama_next(yama, item) == NULL);
-  mu_assert("Added is first",
-	    get_record(yama_first_item(yama)) == item);
-  yama_record *item2 = yama_add_string(yama, "Item 2");
-  mu_assert("Other record created", item2 != NULL);
-  mu_assert("It points to previous",
-	    yama_next(yama, item2) == item);
+	    yama_next_item(item) == NULL);
+  yama_add_string(yama, "Item 2");
+  yama_item *item2 = yama_first_item(yama);
+  mu_assert("Other record created", item2 != item);
+  mu_assert("It points to previous", yama_next_item(item2) == item);
   yama_release(yama);
   return NULL;
 }

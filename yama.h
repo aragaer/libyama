@@ -11,7 +11,6 @@ typedef struct yama_item_s yama_item;
 
 YAMA *yama_read(int fd);
 void yama_release(YAMA *);
-yama_record *yama_next(YAMA const * const, yama_record *);
 
 yama_record *yama_add(YAMA *yama, char *data, size_t len);
 yama_record *yama_insert_after(YAMA *yama, yama_record *prev, char *data, size_t len);
@@ -37,6 +36,7 @@ int size(yama_record const * const);
 const char *payload(yama_record const * const);
 
 yama_record *get_record(yama_item *item);
+yama_item *get_item(YAMA *yama, yama_record *record);
 
 yama_item *yama_first_item(YAMA *yama);
 yama_item *yama_next_item(yama_item *item);

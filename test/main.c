@@ -15,13 +15,14 @@ int verbose;
 #define RECORDS 4
 static char *test_history() {
   YAMA *yama = yama_new();
-  yama_record *items[RECORDS];
+  yama_item *items[RECORDS];
   fill_update(yama, items, RECORDS);
 
   mu_assert("First doesn't have previous version",
-	    yama_before(items[0], items[0]) == NULL);
+	    yama_before(get_record(items[0]),
+			get_record(items[0])) == NULL);
 
-  yama_record *updated = items[1];
+  yama_record *updated = get_record(items[1]);
   yama_record *old = yama_before(updated, updated);
   mu_assert("Does have previous version", old != NULL);
   mu_assert("x", strncmp(payload(old), "x", size(old)) == 0);
@@ -38,14 +39,15 @@ static char *test_longer_history() {
   yama_record *item = yama_add(yama, (char *) &i, sizeof(i));
   for (i = 1; i < RECORDS; i++)
     item = yama_edit(yama, item, (char *) &i, sizeof(i));
-  yama_record *first = get_record(yama_first_item(yama));
+  yama_item *first_item = yama_first_item(yama);
+  yama_record *first = get_record(first_item);
   for (item = first; item; item = yama_before(item, first)) {
     i--;
     mu_assert("Size is correct", size(item) == sizeof(i));
     mu_assert("Contents are correct", memcmp(payload(item), &i, size(item)) == 0);
   }
   mu_assert("That was last in history", i == 0);
-  mu_assert("Just one record", yama_next(yama, first) == NULL);
+  mu_assert("Just one record", yama_next_item(first_item) == NULL);
   yama_release(yama);
   return NULL;
 }

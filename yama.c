@@ -99,10 +99,6 @@ static inline yama_record *list_item_to_record(list_head const * const item) {
     : container_of(item, yama_record, list);
 }
 
-yama_record *yama_next(const YAMA *yama, yama_record *item) {
-  return list_item_to_record(list_get_next(&item->list, yama->records));
-}
-
 int size(yama_record const * const item) {
   return item->size;
 }
@@ -179,18 +175,18 @@ yama_item *record2item(YAMA *yama, yama_record *record) {
       return item;
   item = calloc(1, sizeof(*item));
   item->yama = yama;
-  item->record = (char *) record - (char *) yama->payload;
-  if (yama->last_item != NULL)
-    yama->last_item->next = item;
+  item->record = record_offt;
   if (yama->first_item == NULL)
     yama->first_item = item;
+  else
+    yama->last_item->next = item;
+  yama->last_item = item;
   return item;
 }
 
 yama_item *yama_first_item(YAMA *yama) {
   list_head *first_head = list_get_next(yama->records, yama->records);
-  yama_record *first_record = list_item_to_record(first_head);
-  return record2item(yama, first_record);
+  return record2item(yama, list_item_to_record(first_head));
 }
 
 int item_size(yama_item *item) {
@@ -202,10 +198,15 @@ const char *item_payload(yama_item *item) {
 }
 
 yama_item *yama_next_item(yama_item *item) {
-  yama_record *record = yama_next(item->yama, item2record(item));
-  return record2item(item->yama, record);
+  list_head *list_next = list_get_next(&item2record(item)->list,
+				       item->yama->records);
+  return record2item(item->yama, list_item_to_record(list_next));
 }
 
 yama_record *get_record(yama_item *item) {
   return item2record(item);
+}
+
+yama_item *get_item(YAMA *yama, yama_record *record) {
+  return record2item(yama, record);
 }

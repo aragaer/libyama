@@ -3,6 +3,6 @@
 
 #include <yama.h>
 
-char *test_traverse(void (*fill_func)(YAMA *, yama_record *[], int));
+char *test_traverse(void (*fill_func)(YAMA *, yama_item *[], int));
 
 #endif  // _TEST_TRAVERSE_H_

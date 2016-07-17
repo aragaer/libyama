@@ -3,8 +3,8 @@
 
 #include <yama.h>
 
-void sequential_fill(YAMA *yama, yama_record *items[], int count);
-void striped_fill(YAMA *yama, yama_record *items[], int count);
-void fill_update(YAMA *yama, yama_record *items[], int count);
+void sequential_fill(YAMA *yama, yama_item *items[], int count);
+void striped_fill(YAMA *yama, yama_item *items[], int count);
+void fill_update(YAMA *yama, yama_item *items[], int count);
 
 #endif  // _TEST_FILLS_H_
