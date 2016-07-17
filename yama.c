@@ -60,6 +60,10 @@ static inline yama_record *get_record(yama_item *item) {
   return (yama_record *) ((char *) item->yama->payload + item->record);
 }
 
+static inline size_t record2offt(YAMA *yama, yama_record *record) {
+  return (char *) record - (char *) yama->payload;
+}
+
 static inline yama_item *search_item(YAMA *yama, size_t record_offt) {
   yama_item *item;
   for (item = yama->first_item; item; item = item->next)
@@ -83,7 +87,7 @@ static inline yama_item *new_item(YAMA *yama, size_t record_offt) {
 static inline yama_item *get_item(YAMA *yama, yama_record *record) {
   if (record == NULL)
     return NULL;
-  size_t record_offt = (char *) record - (char *) yama->payload;
+  size_t record_offt = record2offt(yama, record);
   yama_item *item = search_item(yama, record_offt);
   if (item == NULL)
     item = new_item(yama, record_offt);
@@ -176,7 +180,7 @@ yama_item *yama_before(yama_item *item, yama_item *history) {
 yama_item *yama_add(YAMA *yama, char *data, size_t len) {
   yama_record *record = _yama_store(yama, data, len);
   list_insert(&record->list, yama->records);
-  return get_item(yama, record);
+  return new_item(yama, record2offt(yama, record));
 }
 
 yama_item *yama_insert_after(yama_item *prev, char *data, size_t len) {
@@ -184,16 +188,16 @@ yama_item *yama_insert_after(yama_item *prev, char *data, size_t len) {
   yama_record *result = _yama_store(yama, data, len);
   yama_record *prev_record = get_record(prev);
   list_insert(&result->list, &prev_record->list);
-  return get_item(yama, result);
+  return new_item(yama, record2offt(yama, result));
 }
 
 yama_item *yama_edit(yama_item *old, char *data, size_t len) {
   YAMA *yama = old->yama;
-  yama_record *result = _yama_store(yama, data, len);
+  yama_record *new_record = _yama_store(yama, data, len);
   yama_record *old_record = get_record(old);
-  list_replace(&result->list, &old_record->list);
-  list_add_tail(&result->log, &old_record->log);
-  return get_item(yama, result);
+  list_replace(&new_record->list, &old_record->list);
+  list_add_tail(&new_record->log, &old_record->log);
+  return new_item(yama, record2offt(yama, new_record));
 }
 
 void yama_mark_done(yama_item *item) {
