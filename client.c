@@ -6,9 +6,9 @@
 #include "yama.h"
 
 static void read_yama(YAMA *yama) {
-  yama_record *item;
-  for (item = yama_first(yama); item; item = yama_next(yama, item))
-    printf("%.*s\n", size(item), payload(item));
+  yama_item *item;
+  for (item = yama_first_item(yama); item; item = yama_next_item(item))
+    printf("%.*s\n", item_size(item), item_payload(item));
 }
 
 int main(int argc, char *argv[]) {

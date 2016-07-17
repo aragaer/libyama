@@ -35,14 +35,16 @@ char *test_file_read_write() {
 
   fd = open(template, O_RDWR);
   YAMA *yama2 = yama_read(fd);
-  yama_record *item = yama_first(yama2);
+  yama_item *item = yama_first_item(yama2);
   mu_assert("Not empty", item != NULL);
   mu_assert("Hello, world",
-	    strncmp(payload(item), "Hello, world", size(item)) == 0);
-  item = yama_next(yama2, item);
+	    strncmp(item_payload(item), "Hello, world",
+		    item_size(item)) == 0);
+  item = yama_next_item(item);
   mu_assert("Not empty", item != NULL);
   mu_assert("Initial item",
-	    strncmp(payload(item), "Initial item", size(item)) == 0);
+	    strncmp(item_payload(item), "Initial item",
+		    item_size(item)) == 0);
   struct stat buf;
   fstat(fd, &buf);
   mu_assert("File size is correct",

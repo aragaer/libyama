@@ -8,7 +8,7 @@ char *test_add_item() {
   YAMA *yama = yama_new();
 
   mu_assert("Is empty initially",
-	    yama_first(yama) == NULL);
+	    yama_first_item(yama) == NULL);
 
   yama_record *item = yama_add_string(yama, "Hello, world");
   mu_assert("Record created", item != NULL);
@@ -19,7 +19,7 @@ char *test_add_item() {
   mu_assert("This is also a last one",
 	    yama_next(yama, item) == NULL);
   mu_assert("Added is first",
-	    yama_first(yama) == item);
+	    get_record(yama_first_item(yama)) == item);
   yama_record *item2 = yama_add_string(yama, "Item 2");
   mu_assert("Other record created", item2 != NULL);
   mu_assert("It points to previous",
@@ -33,44 +33,48 @@ char *test_simple_usage() {
   yama_add_string(yama, "Hello, world");
   yama_add_string(yama, "Another record");
 
-  yama_record *item;
-  item = yama_first(yama);
+  yama_item *item = yama_first_item(yama);
   mu_assert("Another record",
-	    strncmp(payload(item), "Another record", size(item)) == 0);
-  item = yama_next(yama, item);
+	    strncmp(item_payload(item), "Another record",
+		    item_size(item)) == 0);
+  item = yama_next_item(item);
   mu_assert("Hello, world",
-	    strncmp(payload(item), "Hello, world", size(item)) == 0);
+	    strncmp(item_payload(item), "Hello, world",
+		    item_size(item)) == 0);
   yama_release(yama);
   return NULL;
 }
 
 char *test_insert() {
   YAMA *yama = yama_new();
-  yama_record *item = yama_add_string(yama, "Hello, world");
-  yama_insert_string_after(yama, item, "Another record");
+  yama_record *record = yama_add_string(yama, "Hello, world");
+  yama_insert_string_after(yama, record, "Another record");
 
-  item = yama_first(yama);
+  yama_item *item = yama_first_item(yama);
   mu_assert("Hello, world",
-	    strncmp(payload(item), "Hello, world", size(item)) == 0);
-  item = yama_next(yama, item);
+	    strncmp(item_payload(item), "Hello, world",
+		    item_size(item)) == 0);
+  item = yama_next_item(item);
   mu_assert("Inserted", item != NULL);
   mu_assert("Another record",
-	    strncmp(payload(item), "Another record", size(item)) == 0);
+	    strncmp(item_payload(item), "Another record",
+		    item_size(item)) == 0);
   yama_release(yama);
   return NULL;
 }
 
 char *test_edit() {
   YAMA *yama = yama_new();
-  yama_record *item = yama_add_string(yama, "Hello, world");
-  yama_record *item2 = yama_edit_string(yama, item, "Howdy, world");
-  mu_assert("Stored new text", item2 != NULL);
-  mu_assert("It is not old one", item2 != item);
+  yama_record *record = yama_add_string(yama, "Hello, world");
+  yama_record *record2 = yama_edit_string(yama, record, "Howdy, world");
+  mu_assert("Stored new text", record2 != NULL);
+  mu_assert("It is not old one", record2 != record);
 
-  item = yama_first(yama);
+  yama_item *item = yama_first_item(yama);
   mu_assert("Howdy, world",
-	    strncmp(payload(item), "Howdy, world", size(item)) == 0);
-  mu_assert("Last one", yama_next(yama, item) == NULL);
+	    strncmp(item_payload(item), "Howdy, world",
+		    item_size(item)) == 0);
+  mu_assert("Last one", yama_next_item(item) == NULL);
   yama_release(yama);
   return NULL;
 }
@@ -78,11 +82,13 @@ char *test_edit() {
 char *test_binary_add() {
   YAMA *yama = yama_new();
   char buf[] = {1, 2, 3, 4, 5};
-  yama_record *item = yama_add(yama, buf, sizeof(buf));
-  mu_assert("Item is actually created", item != NULL);
-  mu_assert("Item is actually added", yama_first(yama) == item);
-  mu_assert("Item has correct size", size(item) == sizeof(buf));
-  mu_assert("Item contains the data", memcmp(payload(item), buf, size(item)) == 0);
+  yama_record *record = yama_add(yama, buf, sizeof(buf));
+  mu_assert("Item is actually created", record != NULL);
+  yama_item *item = yama_first_item(yama);
+  mu_assert("Item is actually added", get_record(item) == record);
+  mu_assert("Item has correct size", item_size(item) == sizeof(buf));
+  mu_assert("Item contains the data", memcmp(item_payload(item),
+					     buf, item_size(item)) == 0);
   yama_release(yama);
   return NULL;
 }
@@ -90,13 +96,14 @@ char *test_binary_add() {
 char *test_binary_insert() {
   YAMA *yama = yama_new();
   char buf[] = {1, 2, 3, 4, 5};
-  yama_record *item1 = yama_add(yama, buf, sizeof(buf));
-  yama_record *item2 = yama_insert_after(yama, item1,
-					 "Hello, world", strlen("Hello"));
-  mu_assert("Item is actually created", item2 != NULL);
-  mu_assert("Item is not first", yama_first(yama) == item1);
-  mu_assert("Item has correct size", size(item2) == strlen("Hello"));
-  mu_assert("Item contains the data", memcmp(payload(item2), "Hello",
+  yama_record *record1 = yama_add(yama, buf, sizeof(buf));
+  yama_record *record2 = yama_insert_after(yama, record1,
+					   "Hello, world", strlen("Hello"));
+  yama_item *item = yama_first_item(yama);
+  mu_assert("Item is actually created", record2 != NULL);
+  mu_assert("Item is not first", get_record(item) == record1);
+  mu_assert("Item has correct size", size(record2) == strlen("Hello"));
+  mu_assert("Item contains the data", memcmp(payload(record2), "Hello",
 					     strlen("Hello")) == 0);
   yama_release(yama);
   return NULL;
@@ -105,16 +112,17 @@ char *test_binary_insert() {
 char *test_binary_edit() {
   YAMA *yama = yama_new();
   char buf[] = {1, 2, 3, 4, 5};
-  yama_record *item1 = yama_add(yama, buf, sizeof(buf));
-  yama_record *item2 = yama_edit(yama, item1,
-				 "Hello, world", strlen("Hello"));
-  mu_assert("Item is actually created", item2 != NULL);
-  mu_assert("Item is actually added", yama_first(yama) == item2);
-  mu_assert("Item has correct size", size(item2) == strlen("Hello"));
-  mu_assert("Item contains the data", memcmp(payload(item2), "Hello",
+  yama_record *record1 = yama_add(yama, buf, sizeof(buf));
+  yama_record *record2 = yama_edit(yama, record1,
+				   "Hello, world", strlen("Hello"));
+  yama_item *item = yama_first_item(yama);
+  mu_assert("Item is actually created", record2 != NULL);
+  mu_assert("Item is actually added", get_record(item) == record2);
+  mu_assert("Item has correct size", size(record2) == strlen("Hello"));
+  mu_assert("Item contains the data", memcmp(payload(record2), "Hello",
 					     strlen("Hello")) == 0);
-  mu_assert("This is also last one", yama_next(yama, item2) == NULL);
-  mu_assert("Old one is still here", yama_before(item2, item2) == item1);
+  mu_assert("This is also last one", yama_next_item(item) == NULL);
+  mu_assert("Old one is still here", yama_before(record2, record2) == record1);
   yama_release(yama);
   return NULL;
 }
@@ -122,9 +130,9 @@ char *test_binary_edit() {
 char *test_mark_done() {
   YAMA *yama = yama_new();
   char buf[] = {1, 2, 3, 4, 5};
-  yama_record *item1 = yama_add(yama, buf, sizeof(buf));
-  yama_mark_done(yama, item1);
-  mu_assert("No items", yama_first(yama) == NULL);
+  yama_record *record = yama_add(yama, buf, sizeof(buf));
+  yama_mark_done(yama, record);
+  mu_assert("No items", yama_first_item(yama) == NULL);
   yama_release(yama);
   return NULL;
 }

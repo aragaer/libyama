@@ -4,18 +4,18 @@
 
 #define RECORDS 6
 
-static char *verify_integrity(YAMA *yama, yama_record *items[], int count) {
+static char *verify_integrity(YAMA *yama, yama_record *records[], int count) {
   mu_assert("Last one is in front",
-	    yama_first(yama) == items[count-1]);
+	    get_record(yama_first_item(yama)) == records[count-1]);
   int i;
   for (i = 0; i < count; i++) {
-    yama_record *expected_next = i == 0 ? NULL : items[i-1];
+    yama_record *expected_next = i == 0 ? NULL : records[i-1];
     mu_assert("Check next",
-	      yama_next(yama, items[i]) == expected_next);
+	      yama_next(yama, records[i]) == expected_next);
     /*
-    yama_record *expected_prev = i == count-1 ? NULL : items[i+1];
+    yama_record *expected_prev = i == count-1 ? NULL : records[i+1];
     mu_assert("Check previous",
-	      yama_prev(yama, items[i]) == expected_prev);
+	      yama_prev(yama, records[i]) == expected_prev);
     */
   }
   return NULL;

@@ -38,7 +38,7 @@ static char *test_longer_history() {
   yama_record *item = yama_add(yama, (char *) &i, sizeof(i));
   for (i = 1; i < RECORDS; i++)
     item = yama_edit(yama, item, (char *) &i, sizeof(i));
-  yama_record *first = yama_first(yama);
+  yama_record *first = get_record(yama_first_item(yama));
   for (item = first; item; item = yama_before(item, first)) {
     i--;
     mu_assert("Size is correct", size(item) == sizeof(i));
