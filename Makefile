@@ -1,6 +1,6 @@
 CFLAGS += -Werror -Wall -O3
 LDFLAGS += -flto
-LIB_SRC = yama.c list.o
+LIB_SRC = yama.c list.o file.o
 LIB_OBJ = $(subst .c,.o,$(LIB_SRC))
 
 TEST_SRC = $(wildcard test/*.c)
@@ -26,7 +26,7 @@ yamaclient: client.o libyama.so
 	$(CC) -o $@ $< -L. -lyama
 
 libyama.so: $(LIB_OBJ)
-	$(CC) -shared -o $@ $^
+	$(CC) -shared -o $@ $(LDFLAGS) $^
 	strip $@
 
 .PHONY: all test clienttest clean
