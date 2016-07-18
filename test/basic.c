@@ -128,6 +128,10 @@ char *test_mark_done() {
   yama_item *item = yama_add(yama, buf, sizeof(buf));
   yama_mark_done(item);
   mu_assert("No items", yama_first(yama) == NULL);
+  yama_item *done = yama_full_history(yama);
+  mu_assert("Still exists", done != NULL);
+  mu_assert("Is the same item", done == item);
+  mu_assert("Is done", is_done(done));
   yama_release(yama);
   return NULL;
 }

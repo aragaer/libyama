@@ -38,6 +38,7 @@ typedef struct PACKED {
   int32_t size;
   list_head list;
   list_head log;
+  int done: 1;
   char payload[0];
 } yama_record;
 
@@ -146,9 +147,13 @@ const char *payload(yama_item *item) {
   return get_record(item)->payload;
 }
 
-static void _yama_resize(YAMA *yama, int newsize) {
-  yama->payload = mremap(yama->payload, yama->payload->header.size,
-			 newsize, MREMAP_MAYMOVE);
+int is_done(yama_item *item) {
+  return get_record(item)->done;
+}
+
+static void _yama_resize(YAMA *yama, size_t newsize) {
+  size_t oldsize = yama->payload->header.size;
+  yama->payload = mremap(yama->payload, oldsize, newsize, MREMAP_MAYMOVE);
   if (ftruncate(yama->fd, newsize) == -1)
     perror("ftruncate");
   yama->payload->header.size = newsize;
@@ -157,9 +162,8 @@ static void _yama_resize(YAMA *yama, int newsize) {
 
 static yama_record *_yama_store(YAMA *yama, char *payload, size_t datalen) {
   int aligned_len = ROUND_UP(sizeof(yama_record) + datalen);
-  uint32_t oldsize = yama->payload->header.size;
-  int newsize = oldsize + aligned_len;
-  _yama_resize(yama, newsize);
+  size_t oldsize = yama->payload->header.size;
+  _yama_resize(yama, oldsize + aligned_len);
   yama_record *result = (yama_record *) ((char *) yama->payload + oldsize);
   result->size = datalen;
   list_init_head(&result->list);
@@ -201,16 +205,23 @@ yama_item *yama_edit(yama_item *old, char *data, size_t len) {
 }
 
 void yama_mark_done(yama_item *item) {
-  list_remove(&get_record(item)->list);
+  get_record(item)->done = 1;
 }
 
 yama_item *yama_first(YAMA *yama) {
-  list_head *first_head = list_get_next(yama->records, yama->records);
-  return get_item(yama, list_item_to_record(first_head));
+  yama_item *result = yama_full_history(yama);
+  if (result && get_record(result)->done)
+    return NULL;
+  return result;
 }
 
 yama_item *yama_next(yama_item *item) {
   list_head *list_next = list_get_next(&get_record(item)->list,
 				       item->yama->records);
   return get_item(item->yama, list_item_to_record(list_next));
+}
+
+yama_item *yama_full_history(YAMA *yama) {
+  list_head *first_head = list_get_next(yama->records, yama->records);
+  return get_item(yama, list_item_to_record(first_head));
 }

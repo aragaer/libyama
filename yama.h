@@ -14,6 +14,7 @@ void yama_release(YAMA *);
 yama_item *yama_first(YAMA *yama);
 yama_item *yama_next(yama_item *item);
 yama_item *yama_before(yama_item *item, yama_item *history);
+yama_item *yama_full_history(YAMA *yama);
 
 yama_item *yama_add(YAMA *yama, char *data, size_t len);
 yama_item *yama_insert_after(yama_item *prev, char *data, size_t len);
@@ -34,5 +35,6 @@ void yama_mark_done(yama_item *item);
 
 int size(yama_item *item);
 const char *payload(yama_item *item);
+int is_done(yama_item *item);
 
 #endif  // _YAMA_H_

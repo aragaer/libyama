@@ -2,7 +2,6 @@
 #include "basic.h"
 #include "files.h"
 #include "fills.h"
-#include "item.h"
 #include "list.h"
 #include "minunit.h"
 #include "traverse.h"
@@ -59,7 +58,6 @@ static char *run_all_tests() {
   mu_run_test(basic_tests);
   mu_run_test(test_history);
   mu_run_test(test_longer_history);
-  mu_run_test(test_item);
   return NULL;
 }
 
