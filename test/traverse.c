@@ -6,12 +6,12 @@
 
 static char *verify_integrity(YAMA *yama, yama_item *items[], int count) {
   mu_assert("Last one is in front",
-	    yama_first(yama) == items[count-1]);
+	    yama_latest(yama) == items[count-1]);
   int i;
   for (i = 0; i < count; i++) {
     yama_item *expected_next = i == 0 ? NULL : items[i-1];
     mu_assert("Check next",
-	      yama_next(items[i]) == expected_next);
+	      yama_previous(items[i]) == expected_next);
     /*
     yama_record *expected_prev = i == count-1 ? NULL : records[i+1];
     mu_assert("Check previous",

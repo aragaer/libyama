@@ -11,8 +11,8 @@ typedef struct yama_item_s yama_item;
 YAMA *yama_read(int fd);
 void yama_release(YAMA *);
 
-yama_item *yama_first(YAMA *yama);
-yama_item *yama_next(yama_item *item);
+yama_item *yama_latest(YAMA *yama);
+yama_item *yama_previous(yama_item *item);
 yama_item *yama_before(yama_item *item, yama_item *history);
 yama_item *yama_full_history(YAMA *yama);
 

@@ -7,7 +7,7 @@
 
 static void read_yama(YAMA *yama) {
   yama_item *item;
-  for (item = yama_first(yama); item; item = yama_next(item))
+  for (item = yama_latest(yama); item; item = yama_previous(item))
     printf("%.*s\n", size(item), payload(item));
 }
 

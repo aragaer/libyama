@@ -208,14 +208,14 @@ void yama_mark_done(yama_item *item) {
   get_record(item)->done = 1;
 }
 
-yama_item *yama_first(YAMA *yama) {
+yama_item *yama_latest(YAMA *yama) {
   yama_item *result = yama_full_history(yama);
   if (result && get_record(result)->done)
     return NULL;
   return result;
 }
 
-yama_item *yama_next(yama_item *item) {
+yama_item *yama_previous(yama_item *item) {
   list_head *list_next = list_get_next(&get_record(item)->list,
 				       item->yama->records);
   return get_item(item->yama, list_item_to_record(list_next));

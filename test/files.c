@@ -35,11 +35,11 @@ char *test_file_read_write() {
 
   fd = open(template, O_RDWR);
   YAMA *yama2 = yama_read(fd);
-  yama_item *item = yama_first(yama2);
+  yama_item *item = yama_latest(yama2);
   mu_assert("Not empty", item != NULL);
   mu_assert("Hello, world",
 	    strncmp(payload(item), "Hello, world", size(item)) == 0);
-  item = yama_next(item);
+  item = yama_previous(item);
   mu_assert("Not empty", item != NULL);
   mu_assert("Initial item",
 	    strncmp(payload(item), "Initial item", size(item)) == 0);

@@ -36,14 +36,14 @@ static char *test_longer_history() {
   yama_item *item = yama_add(yama, (char *) &i, sizeof(i));
   for (i = 1; i < RECORDS; i++)
     item = yama_edit(item, (char *) &i, sizeof(i));
-  yama_item *first = yama_first(yama);
+  yama_item *first = yama_latest(yama);
   for (item = first; item; item = yama_before(item, first)) {
     i--;
     mu_assert("Size is correct", size(item) == sizeof(i));
     mu_assert("Contents are correct", memcmp(payload(item), &i, size(item)) == 0);
   }
   mu_assert("That was last in history", i == 0);
-  mu_assert("Just one record", yama_next(first) == NULL);
+  mu_assert("Just one record", yama_previous(first) == NULL);
   yama_release(yama);
   return NULL;
 }
