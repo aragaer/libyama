@@ -1,22 +1,14 @@
 #include <stddef.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include "file.h"
 #include "list.h"
 #include "yama.h"
 
-// #define DEBUG
-
-#ifdef DEBUG
-#define DPRINTF(...) do { \
-    fprintf(stderr, __VA_ARGS__); \
-  } while(0);
-#else
-#define DPRINTF(...)
-#endif
+struct yama_s {
+  int fd;
+  void *records, *file;
+  yama_item *first_item, *last_item;
+};
 
 struct yama_item_s {
   record_offt record;
@@ -24,20 +16,20 @@ struct yama_item_s {
   YAMA *yama;
 };
 
-struct PACKED yama_record_s {
+typedef struct PACKED {
   int32_t size;
   list_head list;
   list_head log;
   int done: 1;
   char payload[0];
-};
+} yama_record;
 
 static inline yama_record *offt2record(YAMA *yama, record_offt offt) {
-  return yama->payload + offt;
+  return yama->file + offt;
 }
 
 static inline record_offt record2offt(YAMA *yama, yama_record *record) {
-  return (void *) record - yama->payload;
+  return (void *) record - yama->file;
 }
 
 static inline yama_item *search_item(YAMA *yama, record_offt record_offt) {
@@ -74,16 +66,20 @@ static inline yama_item *get_item(YAMA *yama, yama_record *record) {
   return item;
 }
 
+static void yama_bind(YAMA *yama, void *file) {
+  yama->file = file;
+  yama->records = records(file);
+}
+
 YAMA *yama_read(int fd) {
   YAMA *result = calloc(1, sizeof(YAMA));
   result->fd = fd;
-  result->payload = yama_map(fd);
-  result->records = records(result->payload);
+  yama_bind(result, yama_map(fd));
   return result;
 }
 
 void yama_release(YAMA *yama) {
-  yama_unmap(yama->payload);
+  yama_unmap(yama->file);
   yama_item *item = yama->first_item;
   while (item) {
     yama_item *to_free = item;
@@ -120,15 +116,10 @@ yama_item *yama_before(yama_item *item, yama_item *history) {
     : get_item(item->yama, container_of(log_next, yama_record, log));
 }
 
-void yama_relocate(YAMA *yama, void *new_payload) {
-  yama->payload = new_payload;
-  yama->records = records(new_payload);
-}
-
 yama_record *yama_alloc_record(YAMA *yama, size_t len) {
-  record_offt new_record_offt = tail(yama->payload);
-  void *new_payload = yama_grow(yama->payload, yama->fd, sizeof(yama_record)+len);
-  yama_relocate(yama, new_payload);
+  record_offt new_record_offt = tail(yama->file);
+  void *new_file = yama_grow(yama->file, yama->fd, sizeof(yama_record)+len);
+  yama_bind(yama, new_file);
   return offt2record(yama, new_record_offt);
 }
 

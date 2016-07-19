@@ -10,58 +10,51 @@
 
 static char _magic[] = {'Y', 'A', 'M', 'A'};
 
-typedef struct PACKED {
+struct PACKED yama_file_s {
   char magic[sizeof(_magic)];
   int32_t size;
   list_head records;
-} yama_header;
-
-struct PACKED yama_payload_s {
-  yama_header header;
-  char payload[0];
+  char file[0];
 };
 
-static void init_payload(yama_payload payload) {
-  int size = sizeof(*payload);
-  memset(payload, 0, size);
-  payload->header.size = size;
-  list_init_head(&payload->header.records);
-  memcpy(payload->header.magic, _magic, sizeof(_magic));
+static void init_empty_file(yama_file file) {
+  memset(file, 0, sizeof(*file));
+  file->size = sizeof(*file);
+  list_init_head(&file->records);
+  memcpy(file->magic, _magic, sizeof(_magic));
 }
 
-yama_payload yama_map(int fd) {
-  yama_header header;
+yama_file yama_map(int fd) {
+  struct yama_file_s header;
   int bytes_read = read(fd, &header, sizeof(header));
-  yama_payload result;
+  yama_file result;
   if (bytes_read == 0) {
     if (ftruncate(fd, sizeof(header)) == -1)
       perror("ftruncate");
     result = mmap(NULL, sizeof(header), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    init_payload(result);
+    init_empty_file(result);
   } else
     result = mmap(NULL, header.size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
   return result;
 }
 
-void yama_unmap(yama_payload payload) {
-  munmap(payload, payload->header.size);
+void yama_unmap(yama_file file) {
+  munmap(file, file->size);
 }
 
-yama_payload yama_grow(yama_payload payload, int fd, int len) {
-  int aligned_len = ROUND_UP(len);
-  size_t oldsize = payload->header.size;
-  size_t newsize = oldsize + aligned_len;
-  yama_payload result = mremap(payload, oldsize, newsize, MREMAP_MAYMOVE);
+yama_file yama_grow(yama_file file, int fd, int len) {
+  size_t newsize = file->size + ROUND_UP(len);
+  yama_file result = mremap(file, file->size, newsize, MREMAP_MAYMOVE);
   if (ftruncate(fd, newsize) == -1)
     perror("ftruncate");
-  result->header.size = newsize;
+  result->size = newsize;
   return result;
 }
 
-list_head *records(yama_payload payload) {
-  return &payload->header.records;
+list_head *records(yama_file file) {
+  return &file->records;
 }
 
-size_t tail(yama_payload payload) {
-  return payload->header.size;
+size_t tail(yama_file file) {
+  return file->size;
 }

@@ -3,13 +3,13 @@
 #include "list.h"
 #pragma GCC visibility push(internal)
 
-typedef struct yama_payload_s *yama_payload;
+typedef struct yama_file_s *yama_file;
 
-yama_payload yama_map(int fd);
-void yama_unmap(yama_payload payload);
-yama_payload yama_grow(yama_payload payload, int fd, int len);
-list_head *records(yama_payload payload);
-size_t tail(yama_payload payload);
+yama_file yama_map(int fd);
+void yama_unmap(yama_file file);
+yama_file yama_grow(yama_file file, int fd, int len);
+list_head *records(yama_file file);
+size_t tail(yama_file file);
 
 #pragma GCC visibility pop
 #endif  // _FILE_H_

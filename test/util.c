@@ -4,13 +4,11 @@
 #include <unistd.h>
 #include <yama.h>
 
-/*
 struct yama_s {
   int fd;
   void *records;
-  void *payload;
+  void *file;
 };
-*/
 
 YAMA *yama_new() {
   char template[] = ".yamaXXXXXX";
@@ -25,9 +23,8 @@ YAMA *yama_new() {
 void test_relocate(YAMA *yama) {
   int size = lseek(yama->fd, 0, SEEK_END);
 
-  void *to_unmap = yama->payload;
-  yama->payload = mmap(NULL, size, PROT_READ | PROT_WRITE,
-		       MAP_SHARED, yama->fd, 0);
-  yama->records += (void *) yama->payload - to_unmap;
+  void *to_unmap = yama->file;
+  yama->file = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, yama->fd, 0);
+  yama->records += (void *) yama->file - to_unmap;
   munmap(to_unmap, size);
 }

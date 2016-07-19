@@ -6,16 +6,9 @@
 
 typedef struct yama_s YAMA;
 typedef struct yama_item_s yama_item;
-typedef struct yama_record_s yama_record;
 
 #define ALIGN 4
 #define PACKED __attribute__((packed, aligned(ALIGN)))
-
-struct yama_s {
-  int fd;
-  void *records, *payload;
-  yama_item *first_item, *last_item;
-};
 
 typedef size_t record_offt;
 
