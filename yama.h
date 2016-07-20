@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 
 typedef struct yama_s YAMA;
 typedef struct yama_item_s yama_item;
@@ -40,5 +41,6 @@ void yama_mark_done(yama_item *item);
 int size(yama_item *item);
 const char *payload(yama_item *item);
 int is_done(yama_item *item);
+time_t timestamp(yama_item *item);
 
 #endif  // _YAMA_H_

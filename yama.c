@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdlib.h>
+#include <time.h>
 #include "file.h"
 #include "list.h"
 #include "yama.h"
@@ -21,6 +22,7 @@ typedef struct PACKED {
   list_head list;
   list_head log;
   int done: 1;
+  int64_t timestamp;
   char payload[0];
 } yama_record;
 
@@ -127,6 +129,8 @@ void yama_init_record(yama_record *record, char *payload, size_t len) {
   list_init_head(&record->list);
   list_init_head(&record->log);
   record->size = len;
+  int64_t stamp = time(NULL);
+  record->timestamp = stamp - stamp % 60;
   memcpy(record->payload, payload, len);
 }
 
@@ -179,4 +183,8 @@ yama_item *yama_previous(yama_item *item) {
 yama_item *yama_full_history(YAMA *yama) {
   list_head *first_head = list_get_next(yama->records, yama->records);
   return get_item(yama, list_item_to_record(first_head));
+}
+
+time_t timestamp(yama_item *item) {
+  return get_record(item)->timestamp;
 }

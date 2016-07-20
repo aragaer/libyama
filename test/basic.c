@@ -1,4 +1,5 @@
 #include <string.h>
+#include <time.h>
 #include <yama.h>
 #include "minunit.h"
 #include "basic.h"
@@ -130,6 +131,22 @@ char *test_mark_done() {
   return NULL;
 }
 
+char *test_timestamp() {
+  YAMA *yama = yama_new();
+  time_t before, after;
+  before = time(NULL);
+  before -= before % 60;
+  yama_item *item = yama_add_string(yama, "ping");
+  after = time(NULL);
+  after -= after % 60;
+  time_t stamp = timestamp(item);
+  mu_assert("Not earlier", stamp >= before);
+  mu_assert("Not later", stamp <= after);
+  mu_assert("Rounded to minutes", stamp % 60 == 0);
+  yama_release(yama);
+  return NULL;
+}
+
 char *basic_tests() {
   mu_run_test(test_add_item);
   mu_run_test(test_simple_usage);
@@ -139,5 +156,6 @@ char *basic_tests() {
   mu_run_test(test_binary_insert);
   mu_run_test(test_binary_edit);
   mu_run_test(test_mark_done);
+  mu_run_test(test_timestamp);
   return NULL;
 }

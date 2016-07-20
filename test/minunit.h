@@ -4,7 +4,7 @@
 #include <stdio.h>
 #define mu_assert(message, test) do {		\
     if (verbose > 1)				\
-      printf("checking " #test "\n");		\
+      printf("%s", "checking " #test "\n");	\
     if (!(test))				\
       return message;				\
   } while (0)
