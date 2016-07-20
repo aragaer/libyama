@@ -111,9 +111,8 @@ int is_done(yama_item *item) {
 
 yama_item *yama_before(yama_item *item, yama_item *history) {
   yama_record *record = get_record(item);
-  yama_record *history_record = get_record(history);
-  list_head *log_next = list_get_next(&record->log, &history_record->log);
-  return log_next == NULL
+  list_head *log_next = list_get_next(&record->log);
+  return log_next == &get_record(history)->log
     ? NULL
     : get_item(item->yama, container_of(log_next, yama_record, log));
 }
@@ -175,14 +174,17 @@ yama_item *yama_latest(YAMA *yama) {
 }
 
 yama_item *yama_previous(yama_item *item) {
-  list_head *list_next = list_get_next(&get_record(item)->list,
-				       item->yama->records);
-  return get_item(item->yama, list_item_to_record(list_next));
+  list_head *list_next = list_get_next(&get_record(item)->list);
+  return list_next == item->yama->records
+    ? NULL
+    : get_item(item->yama, list_item_to_record(list_next));
 }
 
 yama_item *yama_full_history(YAMA *yama) {
-  list_head *first_head = list_get_next(yama->records, yama->records);
-  return get_item(yama, list_item_to_record(first_head));
+  list_head *first_head = list_get_next(yama->records);
+  return first_head == yama->records
+    ? NULL
+    : get_item(yama, list_item_to_record(first_head));
 }
 
 time_t timestamp(yama_item *item) {

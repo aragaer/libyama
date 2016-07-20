@@ -47,7 +47,6 @@ void list_remove(list_head *item) {
   SET_NEXT(GET_PREV(item), GET_NEXT(item));
 }
 
-list_head *list_get_next(list_head *item, list_head *head) {
-  list_head *result = GET_NEXT(item);
-  return result == head ? NULL : result;
+list_head *list_get_next(list_head *item) {
+  return GET_NEXT(item);
 }

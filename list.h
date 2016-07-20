@@ -17,7 +17,7 @@ void list_add_tail(list_head *new, list_head *head);
 void list_insert(list_head *new, list_head *prev);
 void list_replace(list_head *new, list_head *old);
 void list_remove(list_head *item);
-list_head *list_get_next(list_head *item, list_head *head);
+list_head *list_get_next(list_head *item);
 
 #define container_of(ptr, type, member) ((type *) ((char *) (ptr)	\
 						   - offsetof(type, member)))
