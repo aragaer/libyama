@@ -12,7 +12,7 @@ struct yama_s {
 };
 
 struct yama_item_s {
-  record_offt record;
+  record_id record;
   struct yama_item_s *next;
   YAMA *yama;
 };
@@ -26,26 +26,26 @@ typedef struct PACKED {
   char payload[0];
 } yama_record;
 
-static inline yama_record *offt2record(YAMA *yama, record_offt offt) {
+static inline yama_record *offt2record(YAMA *yama, record_id offt) {
   return yama->file + offt;
 }
 
-static inline record_offt record2offt(YAMA *yama, yama_record *record) {
+static inline record_id record2offt(YAMA *yama, yama_record *record) {
   return (void *) record - yama->file;
 }
 
-static inline yama_item *search_item(YAMA *yama, record_offt record_offt) {
+static inline yama_item *search_item(YAMA *yama, record_id record_id) {
   yama_item *item;
   for (item = yama->first_item; item; item = item->next)
-    if (item->record == record_offt)
+    if (item->record == record_id)
       break;
   return item;
 }
 
-static inline yama_item *new_item(YAMA *yama, record_offt record_offt) {
+static inline yama_item *new_item(YAMA *yama, record_id record_id) {
   yama_item *item = calloc(1, sizeof(*item));
   item->yama = yama;
-  item->record = record_offt;
+  item->record = record_id;
   if (yama->first_item == NULL)
     yama->first_item = item;
   else
@@ -58,14 +58,15 @@ static inline yama_record *get_record(yama_item *item) {
   return offt2record(item->yama, item->record);
 }
 
+static inline yama_item *get_item_by_id(YAMA *yama, record_id record_id) {
+  return search_item(yama, record_id)
+    ?: new_item(yama, record_id);
+}
+
 static inline yama_item *get_item(YAMA *yama, yama_record *record) {
-  if (record == NULL)
-    return NULL;
-  record_offt record_offt = record2offt(yama, record);
-  yama_item *item = search_item(yama, record_offt);
-  if (item == NULL)
-    item = new_item(yama, record_offt);
-  return item;
+  return record == NULL
+    ? NULL
+    : get_item_by_id(yama, record2offt(yama, record));
 }
 
 static void yama_bind(YAMA *yama, void *file) {
@@ -118,10 +119,10 @@ yama_item *yama_before(yama_item *item, yama_item *history) {
 }
 
 yama_record *yama_alloc_record(YAMA *yama, size_t len) {
-  record_offt new_record_offt = tail(yama->file);
+  record_id new_record_id = tail(yama->file);
   void *new_file = yama_grow(yama->file, yama->fd, sizeof(yama_record)+len);
   yama_bind(yama, new_file);
-  return offt2record(yama, new_record_offt);
+  return offt2record(yama, new_record_id);
 }
 
 void yama_init_record(yama_record *record, char *payload, size_t len) {
@@ -189,4 +190,12 @@ yama_item *yama_full_history(YAMA *yama) {
 
 time_t timestamp(yama_item *item) {
   return get_record(item)->timestamp;
+}
+
+record_id id(yama_item *item) {
+  return item->record;
+}
+
+yama_item *yama_get_by_id(YAMA *yama, record_id id) {
+  return get_item_by_id(yama, id);
 }

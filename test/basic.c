@@ -147,6 +147,14 @@ char *test_timestamp() {
   return NULL;
 }
 
+char *test_record_id() {
+  YAMA *yama = yama_new();
+  yama_item *item = yama_add_string(yama, "test");
+  mu_assert("Get by id", yama_get_by_id(yama, id(item)) == item);
+  yama_release(yama);
+  return NULL;
+}
+
 char *basic_tests() {
   mu_run_test(test_add_item);
   mu_run_test(test_simple_usage);
@@ -157,5 +165,6 @@ char *basic_tests() {
   mu_run_test(test_binary_edit);
   mu_run_test(test_mark_done);
   mu_run_test(test_timestamp);
+  mu_run_test(test_record_id);
   return NULL;
 }

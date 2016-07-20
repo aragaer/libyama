@@ -11,7 +11,7 @@ typedef struct yama_item_s yama_item;
 #define ALIGN 4
 #define PACKED __attribute__((packed, aligned(ALIGN)))
 
-typedef size_t record_offt;
+typedef size_t record_id;
 
 YAMA *yama_read(int fd);
 void yama_release(YAMA *);
@@ -20,6 +20,7 @@ yama_item *yama_latest(YAMA *yama);
 yama_item *yama_previous(yama_item *item);
 yama_item *yama_before(yama_item *item, yama_item *history);
 yama_item *yama_full_history(YAMA *yama);
+yama_item *yama_get_by_id(YAMA *yama, record_id id);
 
 yama_item *yama_add(YAMA *yama, char *data, size_t len);
 yama_item *yama_insert_after(yama_item *prev, char *data, size_t len);
@@ -42,5 +43,6 @@ int size(yama_item *item);
 const char *payload(yama_item *item);
 int is_done(yama_item *item);
 time_t timestamp(yama_item *item);
+record_id id(yama_item *item);
 
 #endif  // _YAMA_H_
