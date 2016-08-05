@@ -1,0 +1,5 @@
+language: c
+compiler:
+# - clang # doesn't work since clang fails when using -flto
+ - gcc
+script: make test
