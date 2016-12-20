@@ -1,6 +1,6 @@
 CFLAGS += -Werror -Wall -O3
 LDFLAGS += -flto
-LIB_SRC = yama.c list.o file.o
+LIB_SRC = yama.c list.o file.o record.o
 LIB_OBJ = $(subst .c,.o,$(LIB_SRC))
 
 TEST_SRC = $(wildcard test/*.c)

@@ -1,8 +1,8 @@
-#include <stddef.h>
 #include <stdlib.h>
 #include <time.h>
 #include "file.h"
 #include "list.h"
+#include "record.h"
 #include "yama.h"
 
 struct yama_s {
@@ -16,15 +16,6 @@ struct yama_item_s {
   struct yama_item_s *next;
   YAMA *yama;
 };
-
-typedef struct PACKED {
-  int32_t size;
-  list_head list;
-  list_head log;
-  int done: 1;
-  int64_t timestamp;
-  char payload[0];
-} yama_record;
 
 static inline yama_record *offt2record(YAMA *yama, record_id offt) {
   return yama->file + offt;
@@ -92,12 +83,6 @@ void yama_release(YAMA *yama) {
   free(yama);
 }
 
-static inline yama_record *list_item_to_record(list_head const * const item) {
-  return item == NULL
-    ? NULL
-    : container_of(item, yama_record, list);
-}
-
 int size(yama_item *item) {
   return get_record(item)->size;
 }
@@ -123,15 +108,6 @@ yama_record *yama_alloc_record(YAMA *yama, size_t len) {
   void *new_file = yama_grow(yama->file, yama->fd, sizeof(yama_record)+len);
   yama_bind(yama, new_file);
   return offt2record(yama, new_record_id);
-}
-
-void yama_init_record(yama_record *record, char *payload, size_t len) {
-  list_init_head(&record->list);
-  list_init_head(&record->log);
-  record->size = len;
-  int64_t stamp = time(NULL);
-  record->timestamp = stamp - stamp % 60;
-  memcpy(record->payload, payload, len);
 }
 
 yama_record *yama_store(YAMA *yama, char *payload, size_t datalen) {

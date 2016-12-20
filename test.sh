@@ -3,9 +3,9 @@
 export LD_LIBRARY_PATH=.
 
 minute_stamp() {
-    set +e
+    set +x
     date -d "`date +'%Y-%m-%d %H:%M'`" +%s
-    set -e
+    set -x
 }
 stamp1=`minute_stamp`
 
