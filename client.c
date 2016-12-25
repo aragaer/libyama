@@ -18,7 +18,7 @@ static void list_yama(YAMA *yama) {
     char buf[80];
     time_t t = timestamp(item);
     strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M", gmtime(&t));
-    printf("%08x\t%s\t%.*s\n", id(item), buf, size(item), payload(item));
+    printf("%08lx\t%s\t%.*s\n", id(item), buf, size(item), payload(item));
   }
 }
 

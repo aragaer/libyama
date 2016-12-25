@@ -11,7 +11,7 @@ typedef struct yama_item_s yama_item;
 #define ALIGN 4
 #define PACKED __attribute__((packed, aligned(ALIGN)))
 
-typedef size_t record_id;
+typedef uint64_t record_id;
 
 YAMA *yama_read(int fd);
 void yama_release(YAMA *);
